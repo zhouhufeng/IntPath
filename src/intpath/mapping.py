@@ -118,13 +118,43 @@ class GeneMapper:
     def for_organism(cls, org, raw_dir: str | Path) -> "GeneMapper":
         """Build the mapper from files fetched by :mod:`intpath.sources`."""
         raw = Path(raw_dir)
-        m = cls.from_ncbi_gene_info(raw / "ncbi" / f"{org.key}.gene_info.gz")
+        if org.gene_info_is_shared:
+            gi = raw.parent / "shared" / "ncbi" / org.gene_info_url.rsplit("/", 1)[1]
+            m = cls.from_ncbi_gene_info(gi, taxid=org.taxid)
+        else:
+            m = cls.from_ncbi_gene_info(raw / "ncbi" / f"{org.key}.gene_info.gz")
         if org.hgnc and (raw / "hgnc" / "hgnc_complete_set.txt").exists():
             m.add_hgnc(raw / "hgnc" / "hgnc_complete_set.txt")
         up = raw / "uniprot" / f"{org.key}_idmapping_selected.tab.gz"
         if up.exists():
             m.add_uniprot_idmapping(up)
+        rest = raw / "uniprot" / f"{org.key}_uniprot_rest.tsv"
+        if rest.exists():
+            m.add_uniprot_rest(rest)
         return m
+
+    def add_uniprot_rest(self, path: str | Path) -> "GeneMapper":
+        """UniProt REST TSV (Entry, Entry Name, GeneID, ordered locus): accession -> symbol."""
+        by_geneid = {v: k for k, v in self.entrez.items()}
+        with open_text(path) as fh:
+            header = fh.readline().rstrip("\n").split("\t")
+            col = {h: i for i, h in enumerate(header)}
+            for line in fh:
+                f = line.rstrip("\n").split("\t")
+                sym = None
+                for gid in f[col["GeneID"]].split(";") if "GeneID" in col else ():
+                    sym = by_geneid.get(gid.strip())
+                    if sym:
+                        break
+                if sym is None and "Gene Names (ordered locus)" in col:  # e.g. Rv0153c
+                    for tag in f[col["Gene Names (ordered locus)"]].replace("/", " ").split():
+                        sym = self.exact.get(tag.upper())
+                        if sym:
+                            break
+                if sym:
+                    self._add_exact(f[col["Entry"]], sym)
+                    self._add_exact(f[col["Entry Name"]], sym)
+        return self
 
     def map(self, ident: str) -> str | None:
         key = ident.strip().upper()
@@ -152,6 +182,14 @@ class GeneMapper:
 
     def write_aliases(self, path: str | Path, genes: set[str]) -> int:
         """Unambiguous identifier/alias -> symbol table for genes in a release (used by the web UI)."""
+        rows = self.alias_table(genes)
+        with open(path, "w") as fh:
+            fh.write("alias\tsymbol\n")
+            for k in sorted(rows):
+                fh.write(f"{k}\t{rows[k]}\n")
+        return len(rows)
+
+    def alias_table(self, genes: set[str]) -> dict[str, str]:
         rows: dict[str, str] = {}
         for table in (self.alias, self.prev):  # weakest first, so stronger keys overwrite
             for k, syms in table.items():
@@ -160,11 +198,7 @@ class GeneMapper:
         for k, sym in self.exact.items():
             if sym in genes:
                 rows[k] = sym
-        with open(path, "w") as fh:
-            fh.write("alias\tsymbol\n")
-            for k in sorted(rows):
-                fh.write(f"{k}\t{rows[k]}\n")
-        return len(rows)
+        return rows
 
     def map_many(self, idents) -> dict[str, str]:
         out = {}

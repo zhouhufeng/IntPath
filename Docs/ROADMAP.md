@@ -21,15 +21,22 @@
       edges (score ≥ 700), 23,175 of them also curated pathway relations
       (`Data/intpathv2/release/sapiens/stats.json`)
 
-## Known gaps in the first build
-- Reactome contributes membership only. Its gene pairs need the Reactome interaction export
-  (`reactome.homo_sapiens.interactions.tab-delimited.txt`), mapped to relations by reaction
-  type.
-- The PPI layer is STRING only. The BioGRID and PSI-MITAB (IntAct, HuRI) parsers are ready;
-  add their files with `--ppi BioGRID:biogrid:<file>`, or add automatic downloads.
-- *M. tuberculosis* has no GO Consortium GAF. Use the UniProt GOA proteome file.
-- The IntPathV2 merge guards (Jaccard ≥ 0.1, entity guard, no Reactome-internal merging) were tuned
-  on the human build. Review `related_pathways.tsv` by hand for each new organism.
+- [x] Reactome topology (interaction export) and hierarchy-aware merging
+- [x] PPIs: STRING, BioGRID, IntAct, MINT (via IntAct/IMEx), HuRI, with confidence tiers
+- [x] MSigDB v2026.1 companion library and equivalence links
+- [x] SQLite release database and compact serving library
+- [x] Deployed at https://intpath.genohub.org (open tier: human, mouse, yeast, *M. tuberculosis*),
+      2026-10-05
+
+## Known gaps
+- *M. tuberculosis* has no open-licence pathway source (KEGG is full tier only). Its public
+  release has GO (from UniProt) and PPIs only.
+- Mouse and yeast Reactome are inferred by orthology and have no interaction export, so they
+  carry membership only. Yeast WikiPathways is small.
+- The full tier (with KEGG) is built for human only and isn't served publicly. Serving it
+  needs a KEGG licence (plan D4).
+- Not done yet: CORUM/Complex Portal complexes, SIGNOR, GO evidence variants (no-IEA), and
+  multilevel GSEA p-values.
 
 ## Next
 1. **Builds for all registry organisms.** Run `intpath build <org>` for each organism, then

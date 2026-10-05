@@ -60,6 +60,7 @@ def main(argv: list[str] | None = None) -> None:
     b.add_argument("--string-min-score", type=int, default=700)
     b.add_argument("--no-go", action="store_true")
     b.add_argument("--no-ppi", action="store_true")
+    b.add_argument("--no-msigdb", action="store_true")
     b.add_argument("--no-topology", action="store_true", help="skip KGML/GPML gene-pair extraction")
     b.add_argument("--public", action="store_true", help="exclude licence-restricted sources (KEGG, BioCyc)")
 
@@ -106,7 +107,7 @@ def main(argv: list[str] | None = None) -> None:
         stats = build(organisms.get(a.organism), a.raw, a.out, pathway_sources=tuple(a.sources.split(",")),
                       biocyc_col=a.biocyc_col, with_go=not a.no_go, with_ppi=not a.no_ppi,
                       string_min_score=a.string_min_score, extra_ppi=extra, topology=not a.no_topology,
-                      public=a.public)
+                      public=a.public, with_msigdb=not a.no_msigdb)
         print(json.dumps({k: v for k, v in stats.items() if k != "files"}, indent=2))
         return
 

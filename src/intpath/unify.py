@@ -95,13 +95,82 @@ def merge_pathways(
         matches, legacy=legacy, display=display, rules=rules, merge_same_name=legacy and organism == "musculus"
     )
 
+    if not legacy:
+        groups = split_hierarchy(groups, by_key)
+
     grouped = {k for g in groups for k in g.members}
     for key, p in by_key.items():  # every unmatched pathway is carried over unchanged
         if key not in grouped:
             nm = p.name if legacy else clean_name(p.name)
             groups.append(PathwayGroup(nm, [key]))
 
-    return [unify_group(g, by_key) for g in groups], matches
+    sets = [unify_group(g, by_key) for g in groups]
+    if not legacy:
+        link_hierarchy(sets, by_key)
+    return sets, matches
+
+
+def _ancestor_index(by_key: dict[tuple[str, str], SourcePathway]):
+    """(source, source_id) -> all ancestor source ids, from SourcePathway.parents."""
+    parents = {(p.source, p.source_id): p.parents for p in by_key.values() if p.source_id}
+    memo: dict[tuple[str, str], set[str]] = {}
+
+    def anc(node: tuple[str, str]) -> set[str]:
+        if node not in memo:
+            memo[node] = set()
+            out: set[str] = set()
+            for par in parents.get(node, ()):
+                out.add(par)
+                out |= anc((node[0], par))
+            memo[node] = out
+        return memo[node]
+
+    return anc
+
+
+def split_hierarchy(groups: list[PathwayGroup], by_key) -> list[PathwayGroup]:
+    """A pathway whose ancestor (same source) sits in the same group is detached, not merged.
+
+    Name chaining can otherwise put Reactome "Base Excision Repair" and its own
+    sub-pathways into one set; the parent already contains the children's genes,
+    so detaching them loses nothing and keeps the hierarchy explicit (see
+    :func:`link_hierarchy`).
+    """
+    anc = _ancestor_index(by_key)
+    out: list[PathwayGroup] = []
+    for g in groups:
+        ids = {(s, by_key[(s, n)].source_id) for s, n in g.members}
+        keep, detached = [], []
+        for s, n in g.members:
+            node = (s, by_key[(s, n)].source_id)
+            if node[1] and any((s, a) in ids for a in anc(node)):
+                detached.append((s, n))
+            else:
+                keep.append((s, n))
+        if len(keep) > 1:
+            out.append(PathwayGroup(g.name, keep))
+        elif keep:
+            out.append(PathwayGroup(clean_name(keep[0][1]), keep))
+        out += [PathwayGroup(clean_name(n), [(s, n)]) for s, n in detached]
+    return out
+
+
+def link_hierarchy(sets: list[GeneSet], by_key) -> None:
+    """Add parent/child links between integrated sets from source hierarchies."""
+    where: dict[tuple[str, str], str] = {}
+    for gs in sets:
+        for s, sid in gs.members:
+            where[(s, sid)] = gs.id
+    by_id = {gs.id: gs for gs in sets}
+    for p in by_key.values():
+        child = where.get((p.source, p.source_id))
+        for par in p.parents:
+            parent = where.get((p.source, par))
+            if child and parent and child != parent:
+                if parent not in by_id[child].links:
+                    by_id[child].links.append(parent)
+                if child not in by_id[parent].links:
+                    by_id[parent].links.append(child)
 
 
 def unify_group(group: PathwayGroup, by_key: dict[tuple[str, str], SourcePathway]) -> GeneSet:

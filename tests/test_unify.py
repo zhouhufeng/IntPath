@@ -29,3 +29,14 @@ def test_overlap_guard_blocks_lookalike_names_without_shared_genes():
     assert not matches and len(sets) == 2
     sets, matches = merge_pathways(pws, legacy=True)
     assert len(matches) == 1
+
+
+def test_hierarchy_children_are_detached_and_linked():
+    parent = SourcePathway("Reactome", "Base Excision Repair", "R-1", genes=set("ABCDEF"))
+    child = SourcePathway("Reactome", "Defective Base Excision Repair", "R-2", genes=set("ABC"), parents={"R-1"})
+    kegg = SourcePathway("KEGG", "Base excision repair", "hsa03410", genes=set("ABCDE"))
+    sets, _ = merge_pathways([parent, child, kegg], legacy=False)
+    merged = next(s for s in sets if len(s.members) > 1)
+    assert {sid for _, sid in merged.members} == {"R-1", "hsa03410"}
+    lone = next(s for s in sets if s.members == [("Reactome", "R-2")])
+    assert merged.id in lone.links and lone.id in merged.links

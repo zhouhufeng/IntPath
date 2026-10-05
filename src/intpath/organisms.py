@@ -33,8 +33,15 @@ class Organism:
     go_gaf: str | None = None  # GO Consortium GAF stem
     biocyc: str | None = None  # BioCyc PGDB (subscription licence since 2017)
     hgnc: bool = False  # human: layer HGNC on top of NCBI gene_info
+    # UniProt by_organism idmapping file code (e.g. "HUMAN_9606"); None -> UniProt REST stream by taxid
+    uniprot: str | None = None
     in_old_intpath: bool = False
     aliases: tuple[str, ...] = field(default=())
+
+    @property
+    def gene_info_is_shared(self) -> bool:
+        """True when gene_info is a multi-organism file (All_*) that must be filtered by taxid."""
+        return self.gene_info.split("/")[-1].startswith("All_")
 
     @property
     def gene_info_url(self) -> str:
@@ -50,28 +57,28 @@ ORGANISMS: dict[str, Organism] = {
     o.key: o
     for o in [
         Organism("sapiens", "Homo sapiens", "9606", "Mammalia/Homo_sapiens", "hsa", "Homo sapiens", "Homo_sapiens",
-                 "9606", "goa_human", "HUMAN", hgnc=True, in_old_intpath=True, aliases=("human", "hsa", "9606")),
+                 "9606", "goa_human", "HUMAN", hgnc=True, in_old_intpath=True, uniprot="HUMAN_9606", aliases=("human", "hsa", "9606")),
         Organism("musculus", "Mus musculus", "10090", "Mammalia/Mus_musculus", "mmu", "Mus musculus", "Mus_musculus",
-                 "10090", "mgi", "MOUSE", in_old_intpath=True, aliases=("mouse", "mmu", "10090")),
+                 "10090", "mgi", "MOUSE", in_old_intpath=True, uniprot="MOUSE_10090", aliases=("mouse", "mmu", "10090")),
         Organism("cerevisiae", "Saccharomyces cerevisiae", "559292", "Fungi/Saccharomyces_cerevisiae", "sce",
                  "Saccharomyces cerevisiae", "Saccharomyces_cerevisiae", "4932", "sgd", "YEAST", in_old_intpath=True,
-                 aliases=("yeast", "sce", "4932", "559292")),
+                 uniprot="YEAST_559292", aliases=("yeast", "sce", "4932", "559292")),
         Organism("tuberculosis", "Mycobacterium tuberculosis H37Rv", "83332",
-                 "Archaea_Bacteria/Mycobacterium_tuberculosis_H37Rv", "mtu", None, "Mycobacterium_tuberculosis",
+                 "Archaea_Bacteria/All_Archaea_Bacteria", "mtu", None, "Mycobacterium_tuberculosis",
                  "83332", None, "MTBRV", in_old_intpath=True, aliases=("mtb", "mtu", "83332", "1773")),
         Organism("norvegicus", "Rattus norvegicus", "10116", "Mammalia/Rattus_norvegicus", "rno", "Rattus norvegicus",
-                 "Rattus_norvegicus", "10116", "rgd", "RAT", aliases=("rat", "rno", "10116")),
+                 "Rattus_norvegicus", "10116", "rgd", "RAT", uniprot="RAT_10116", aliases=("rat", "rno", "10116")),
         Organism("rerio", "Danio rerio", "7955", "Non-mammalian_vertebrates/Danio_rerio", "dre", "Danio rerio",
-                 "Danio_rerio", "7955", "zfin", None, aliases=("zebrafish", "dre", "7955")),
+                 "Danio_rerio", "7955", "zfin", None, uniprot="DANRE_7955", aliases=("zebrafish", "dre", "7955")),
         Organism("melanogaster", "Drosophila melanogaster", "7227", "Invertebrates/Drosophila_melanogaster", "dme",
-                 "Drosophila melanogaster", "Drosophila_melanogaster", "7227", "fb", "FLY", aliases=("fly", "dme", "7227")),
+                 "Drosophila melanogaster", "Drosophila_melanogaster", "7227", "fb", "FLY", uniprot="DROME_7227", aliases=("fly", "dme", "7227")),
         Organism("elegans", "Caenorhabditis elegans", "6239", "Invertebrates/Caenorhabditis_elegans", "cel",
-                 "Caenorhabditis elegans", "Caenorhabditis_elegans", "6239", "wb", "WORM", aliases=("worm", "cel", "6239")),
+                 "Caenorhabditis elegans", "Caenorhabditis_elegans", "6239", "wb", "WORM", uniprot="CAEEL_6239", aliases=("worm", "cel", "6239")),
         Organism("thaliana", "Arabidopsis thaliana", "3702", "Plants/Arabidopsis_thaliana", "ath", None,
-                 "Arabidopsis_thaliana", "3702", "tair", "ARA", aliases=("arabidopsis", "ath", "3702")),
+                 "Arabidopsis_thaliana", "3702", "tair", "ARA", uniprot="ARATH_3702", aliases=("arabidopsis", "ath", "3702")),
         Organism("coli", "Escherichia coli K-12 MG1655", "511145",
                  "Archaea_Bacteria/Escherichia_coli_str._K-12_substr._MG1655", "eco", None, None, "511145", "ecocyc",
-                 "ECOLI", aliases=("ecoli", "eco", "511145", "83333")),
+                 "ECOLI", uniprot="ECOLI_83333", aliases=("ecoli", "eco", "511145", "83333")),
     ]
 }
 

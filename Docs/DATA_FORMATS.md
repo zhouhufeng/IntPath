@@ -5,13 +5,14 @@ All files are tab-delimited UTF-8 with a header row, one directory per organism
 
 | file | columns |
 |---|---|
-| `intpath_genesets.tsv` | `set_id`, `name`, `collection` (pathway, GO:BP, GO:MF, GO:CC), `sources` (comma list), `n_genes`, `n_pairs`, `links` (related set IDs) |
+| `intpath_genesets.tsv` | `set_id`, `name`, `collection` (pathway, GO:BP, GO:MF, GO:CC, msigdb:<collection>), `sources` (comma list), `n_genes`, `n_pairs`, `links` (related set IDs) |
 | `intpath_set_genes.tsv` | `set_id`, `gene`, `sources`: the source databases that put the gene in the set (for GO, the evidence codes) |
 | `intpath_set_genepairs.tsv` | `set_id`, `gene_a`, `gene_b`, `relations` (ECrel/PPrel/GErel/GPrel), `sources` |
 | `intpath_set_members.tsv` | `set_id`, `source`, `source_pathway` (original pathway ID or name, or GO term ID) |
 | `intpath.gmt` | GMT export: `set_id`, `name`, genes… |
-| `intpath_ppi.tsv` | `gene_a`, `gene_b`, `sources`, `n_sources`, `n_pmids`, `methods`, `string_score`, `pathway_sets` |
+| `intpath_ppi.tsv` | `gene_a`, `gene_b`, `sources`, `n_sources`, `n_pmids`, `methods`, `string_score`, `tier`, `pathway_sets` |
 | `related_pathways.tsv` | the accepted name matches: `source_a`, `pathway_a`, `source_b`, `pathway_b`, `align_score`, `align_ratio`, `jaccard` |
+| `intpath.sqlite` | the release database served by the web service: tables `meta`, `gene`, `alias`, `gset`, `set_member`, `set_gene`, `set_pair`, `set_link`, `ppi` (with `tier`), `msigdb_equivalent`, `match_log` (see `src/intpath/db.py`) |
 | `stats.json` | build date, per-source and integrated statistics, gene-mapping statistics |
 
 ## Unified gene relationships (from old IntPath, Table 1)

@@ -82,13 +82,12 @@ footer { color: var(--muted); font-size: 12px; padding: 24px 0; border-top: 1px 
       <textarea id="input" spellcheck="false" placeholder="TP53 MDM2 CDKN1A BAX ..."></textarea>
       <div class="hint" id="inputHint">Example: <a id="example">load an example</a></div>
       <label>Libraries</label>
-      <div class="checks" id="cols">
-        <label><input type="checkbox" value="pathway" checked>Pathways</label>
-        <label><input type="checkbox" value="GO:BP" checked>GO BP</label>
-        <label><input type="checkbox" value="GO:MF">GO MF</label>
-        <label><input type="checkbox" value="GO:CC">GO CC</label>
+      <div class="checks" id="cols"></div>
+      <div class="checks" id="ppiBox" style="display:none">
+        <label><input type="checkbox" id="withPPI" checked>Add merged PPI edges inside pathways</label>
+        <label for="tier" style="display:block;color:var(--muted)">PPI confidence</label>
+        <select id="tier"><option value="high" selected>high (≥2 experimental sources or publications, or STRING ≥ 900)</option><option value="medium">medium (+ single experimental source, STRING ≥ 700)</option><option value="low">all merged edges</option></select>
       </div>
-      <div class="checks" id="ppiBox" style="display:none"><label><input type="checkbox" id="withPPI" checked>Add merged PPI edges inside pathways</label></div>
       <button class="go" id="run">Run analysis</button>
     </div>
     <div class="card">
@@ -110,14 +109,17 @@ footer { color: var(--muted); font-size: 12px; padding: 24px 0; border-top: 1px 
       <div class="stats" id="stats"></div>
       <h3>How IntPath integrates</h3>
       <p>Pathways from KEGG, Reactome, WikiPathways (and BioCyc where licensed) are normalised to official gene symbols. Related pathways are found by case-insensitive longest-common-subsequence alignment of their names (accepted when the shorter name aligns almost completely with ratio ≥ 0.5, or ratio &gt; 0.91), guarded by curated mismatch lists and, in IntPathV2, shared genes. Related pathways are grouped with a disjoint set and <em>fully unified</em>: every gene and gene pair is kept, with the source databases that support it.</p>
-      <p>GO annotations are propagated up the ontology; terms with identical gene sets on one lineage are merged without loss and linked to equivalent pathways. PPIs from STRING, BioGRID and IntAct are merged per gene pair with their evidence, and marked when the pair is also a curated pathway relation.</p>
+      <p>GO annotations are propagated up the ontology; terms with identical gene sets on one lineage are merged without loss and linked to equivalent pathways. PPIs from STRING, BioGRID, IntAct, MINT and HuRI are merged per gene pair with their evidence and a confidence tier, and marked when the pair is also a curated pathway relation. MSigDB collections are offered as companion libraries; MSigDB copies of Reactome, WikiPathways and GO are linked to the live sources instead of being counted twice.</p>
       <h3>Enrichment</h3>
       <p><b>Gene list</b>: hypergeometric test with BH-FDR, plus <em>consensus</em>, the share of hit genes that ≥ 2 source databases place in the pathway. <b>Gene pairs</b>: tests whether curated relations among your genes concentrate in a pathway's wiring. <b>Ranked</b>: preranked GSEA with size-matched permutation nulls (NES, nominal p, FDR).</p>
-      <p>Citation: Zhou H, Jin J, Zhang H, Yi B, Wozniak M, Wong L. IntPath: an integrated pathway gene relationship database for model organisms and important pathogens. <i>BMC Systems Biology</i> 2012, 6(Suppl 2):S2.</p>
+      <h3>Sources and downloads</h3>
+      <div class="tablewrap"><table id="versions"></table></div>
+      <p id="downloads"></p>
+      <p>Citation (old IntPath): Zhou H, Jin J, Zhang H, Yi B, Wozniak M, Wong L. IntPath: an integrated pathway gene relationship database for model organisms and important pathogens. <i>BMC Systems Biology</i> 2012, 6(Suppl 2):S2.</p>
     </div>
   </section>
 </main>
-<footer class="wrap">IntPathV2 · <a href="/docs">API</a> · source code: github.com/zhouhufeng/IntPath</footer>
+<footer class="wrap">IntPathV2 (in development) · <a href="/docs">API</a> · <a href="https://github.com/zhouhufeng/IntPath">source code</a></footer>
 
 <script>
 const $ = s => document.querySelector(s);
@@ -161,7 +163,7 @@ $("#run").onclick = async () => {
     text.split(/\n/).forEach(l => { const f = l.split(/[\t,; ]+/); const v = parseFloat(f[1]); if (f[0] && !isNaN(v)) ranking[f[0]] = v; });
     body = {ranking, collections: cols()};
   } else {
-    body = {genes: text.split(/[\s,;]+/).filter(Boolean), collections: mode === "pairs" ? ["pathway"] : cols(), with_ppi: $("#withPPI").checked};
+    body = {genes: text.split(/[\s,;]+/).filter(Boolean), collections: mode === "pairs" ? ["pathway"] : cols(), with_ppi: $("#withPPI").checked, ppi_tier: $("#tier").value};
   }
   const res = await fetch(url, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
   if (!res.ok) { $("#status").textContent = "Error: " + (await res.text()); return; }
@@ -188,7 +190,11 @@ const theme = r => r.theme ? `<div class="theme">theme ${r.theme}${r.theme_leade
 const link = r => `<a onclick="showSet('${esc(r.id)}')">${esc(r.name)}</a><div>${(r.sources || "").split(",").filter(Boolean).map(s => `<span class="chip">${esc(s)}</span>`).join("")}<span class="chip">${esc(r.collection)}</span></div>`;
 
 $("#search").onclick = async () => {
-  const r = await fetch(`/api/${org()}/search?q=${encodeURIComponent($("#q").value)}`).then(r => r.json());
+  const term = $("#q").value.trim();
+  const [r, g] = await Promise.all([
+    fetch(`/api/${org()}/search?q=${encodeURIComponent(term)}`).then(r => r.json()),
+    fetch(`/api/${org()}/gene/${encodeURIComponent(term)}?limit=1`).then(r => r.ok ? r.json() : null)]);
+  $("#detail").innerHTML = g ? `<p>Gene <a onclick="showGene('${esc(g.gene)}')"><b>${esc(g.gene)}</b></a>: ${g.sets.length} gene sets — open the gene page for PPI partners.</p>` : "";
   $("#browse").innerHTML = "<tr><th>Name</th><th>Library</th><th>Sources</th><th>Genes</th></tr>" + r.map(s =>
     `<tr><td><a onclick="showSet('${esc(s.id)}')">${esc(s.name)}</a></td><td>${esc(s.collection)}</td><td>${s.sources.map(x => `<span class="chip">${esc(x)}</span>`).join("")}</td><td class="num">${s.n_genes}</td></tr>`).join("");
 };
@@ -207,13 +213,39 @@ async function showSet(id) {
     <div class="tablewrap"><table><tr><th>Gene A</th><th>Gene B</th><th>Relation</th><th>Sources</th></tr>${s.pairs.slice(0, 300).map(p => `<tr><td>${esc(p.a)}</td><td>${esc(p.b)}</td><td>${p.relations.join(", ")}</td><td>${p.sources.join(", ")}</td></tr>`).join("")}</table></div>`;
 }
 
+async function showGene(sym) {
+  const g = await fetch(`/api/${org()}/gene/${encodeURIComponent(sym)}`).then(r => r.json());
+  $("#detail").innerHTML = `<h3>${esc(g.gene)}</h3>
+    <p><b>${g.sets.length} gene sets</b></p>
+    <div class="tablewrap"><table><tr><th>Set</th><th>Library</th><th>Support</th></tr>${g.sets.slice(0, 400).map(s => `<tr><td><a onclick="showSet('${esc(s.id)}')">${esc(s.name)}</a></td><td>${esc(s.collection)}</td><td>${s.sources.map(x => `<span class="chip">${esc(x)}</span>`).join("")}</td></tr>`).join("")}</table></div>
+    <p><b>${g.ppi_partners.length} PPI partners</b> (merged STRING, BioGRID, IntAct, MINT, HuRI)</p>
+    <div class="tablewrap"><table><tr><th>Partner</th><th>Sources</th><th>Publications</th><th>STRING</th><th>Tier</th><th>In a curated pathway</th></tr>${g.ppi_partners.map(p => `<tr><td><a onclick="showGene('${esc(p.gene)}')">${esc(p.gene)}</a></td><td>${p.sources.map(x => `<span class="chip">${esc(x)}</span>`).join("")}</td><td class="num">${p.n_pmids}</td><td class="num">${p.string_score || ""}</td><td>${esc(p.tier)}</td><td>${p.pathway_supported ? "yes" : ""}</td></tr>`).join("")}</table></div>`;
+}
+
+const COLLECTION_LABELS = {"pathway": "Pathways (integrated)", "GO:BP": "GO biological process", "GO:MF": "GO molecular function", "GO:CC": "GO cellular component", "msigdb:H": "MSigDB Hallmarks"};
+const DEFAULT_ON = new Set(["pathway", "GO:BP", "msigdb:H"]);
+async function loadCollections() {
+  const rows = await fetch(`/api/${org()}/collections`).then(r => r.ok ? r.json() : []);
+  const groups = new Map();
+  for (const {collection, n} of rows) {
+    // group MSigDB sub-collections by their top level (msigdb:C2:CGP -> msigdb:C2)
+    const key = collection.startsWith("msigdb:") && collection !== "msigdb:H" ? collection.split(":").slice(0, 2).join(":") : collection;
+    groups.set(key, (groups.get(key) || 0) + n);
+  }
+  $("#cols").innerHTML = [...groups].map(([k, n]) => `<label title="${n} sets"><input type="checkbox" value="${esc(k)}" ${DEFAULT_ON.has(k) ? "checked" : ""}>${esc(COLLECTION_LABELS[k] || k.replace("msigdb:", "MSigDB "))} <span style="color:var(--muted)">(${n.toLocaleString()})</span></label>`).join("");
+}
+
 async function loadStats() {
   const s = await fetch(`/api/${org()}/stats`).then(r => r.ok ? r.json() : null);
   if (!s) { $("#stats").innerHTML = ""; return; }
-  const items = [["Integrated pathways", s.pathways?.sets], ["Merged from ≥2 pathways", s.pathways?.merged_sets], ["Pathway genes", s.pathways?.genes], ["Pathway gene pairs", s.pathways?.gene_pairs], ["GO gene sets", s.go?.go_sets], ["PPI edges", s.ppi?.edges]];
+  const items = [["Integrated pathways", s.pathways?.sets], ["Merged from ≥2 pathways", s.pathways?.merged_sets], ["Pathway genes", s.pathways?.genes], ["Pathway gene pairs", s.pathways?.gene_pairs], ["GO gene sets", s.go?.go_sets], ["MSigDB gene sets", s.msigdb?.sets], ["PPI edges", s.ppi?.edges], ["High-confidence PPI edges", s.ppi?.edges_by_tier?.high]];
   $("#stats").innerHTML = items.filter(i => i[1] != null).map(([k, v]) => `<div class="stat"><b>${(+v).toLocaleString()}</b><span>${k} · ${esc(s.organism)}</span></div>`).join("");
+  $("#versions").innerHTML = "<tr><th>Source</th><th>Release</th></tr>" + Object.entries(s.versions || {}).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join("") + `<tr><td>IntPathV2 build</td><td>${esc(s.built)} (${esc(s.tier)} tier)</td></tr>`;
+  const files = ["intpath.gmt", "intpath_genesets.tsv", "intpath_set_genes.tsv", "intpath_set_genepairs.tsv", "intpath_set_members.tsv", "intpath_ppi.tsv", "related_pathways.tsv"];
+  $("#downloads").innerHTML = "<b>Downloads:</b> " + files.map(f => `<a href="/download/${org()}/${f}">${f}</a>`).join(" · ");
 }
-loadOrganisms();
+$("#org").onchange = () => { loadCollections(); if (!$("#tab-about").classList.contains("hidden")) loadStats(); };
+loadOrganisms().then(loadCollections);
 </script>
 </body>
 </html>

@@ -23,7 +23,7 @@ cp "$SRC/pyproject.toml" "$SRC/Dockerfile" "$SRC/.gitignore" "$DST/"
 cp "$SRC/scripts/sync_public.sh" "$DST/scripts/"
 
 # build summaries only (counts, no data rows)
-for s in "$SRC"/Data/intpathv2/release/*/stats.json; do
+for s in "$SRC"/Data/intpathv2/release-open/*/stats.json; do
   [ -f "$s" ] || continue
   org=$(basename "$(dirname "$s")")
   python3 - "$s" "$DST/stats/${org}_stats.json" <<'PY'

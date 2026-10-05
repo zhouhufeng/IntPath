@@ -1,24 +1,31 @@
 """IntPathV2 web service (intpath.genohub.org).
 
-    uvicorn web.app:app            # serves Data/intpathv2/release (env INTPATH_RELEASE_ROOT)
+    uvicorn web.app:app               # serves $INTPATH_RELEASE_ROOT/<organism>/intpath.sqlite
     intpath serve --release-root Data/intpathv2/release
 
-REST API (all organisms that have a built release directory):
+Each organism release is one read-only SQLite file (intpath.sqlite). Statistics
+run on a compact in-memory library (intpath.library); details (provenance, gene
+pairs, PPI evidence) are read from SQLite per request.
+
+REST API
+    GET  /healthz
     GET  /api/organisms
-    GET  /api/{org}/stats
-    GET  /api/{org}/search?q=...           pathways / GO terms by name or gene
-    GET  /api/{org}/set/{set_id}           genes (+source provenance), members, pairs, links
-    GET  /api/{org}/gene/{symbol}          sets containing the gene, PPI partners
-    POST /api/{org}/enrich/ora             {"genes": [...], "background": [...]?, "collections": [...]?}
-    POST /api/{org}/enrich/pairs           {"genes": [...], "with_ppi": true}
-    POST /api/{org}/enrich/gsea            {"ranking": {"GENE": score, ...}, "nperm": 1000}
-    GET  /download/{org}/{file}            release files
+    GET  /api/{org}/stats                      build statistics and source versions
+    GET  /api/{org}/collections                gene set collections with counts
+    GET  /api/{org}/search?q=...               sets by name, id or gene
+    GET  /api/{org}/set/{set_id}               genes (+sources), members, gene pairs, links, MSigDB equivalents
+    GET  /api/{org}/gene/{symbol}              sets containing the gene, PPI partners with evidence
+    POST /api/{org}/enrich/ora                 {"genes": [...], "background": [...]?, "collections": [...]?}
+    POST /api/{org}/enrich/pairs               {"genes": [...], "with_ppi": true, "ppi_tier": "high"}
+    POST /api/{org}/enrich/gsea                {"ranking": {"GENE": score}, "nperm": 1000}
+    GET  /download/{org}/{file}                release files
 """
 
 from __future__ import annotations
 
 import json
 import os
+import threading
 from functools import lru_cache
 from pathlib import Path
 
@@ -28,76 +35,43 @@ from pydantic import BaseModel, Field
 
 from intpath import __version__, enrich
 from intpath import organisms as orglib
-from intpath.io import read_release
-from intpath.ppi import PPINetwork, canon
+from intpath.library import Library, load_library
 
 STATIC = Path(__file__).parent / "static"
 MAX_GENES = 20000
+DOWNLOADS = ("intpath.gmt", "intpath_genesets.tsv", "intpath_set_genes.tsv", "intpath_set_genepairs.tsv",
+             "intpath_set_members.tsv", "intpath_ppi.tsv", "related_pathways.tsv", "stats.json")
 
 
 class GeneListRequest(BaseModel):
     genes: list[str] = Field(..., max_length=MAX_GENES)
-    background: list[str] | None = None
+    background: list[str] | None = Field(None, max_length=60000)
     collections: list[str] | None = None
-    min_size: int = 5
-    max_size: int = 2000
-    alpha: float = 0.05
+    min_size: int = Field(5, ge=1)
+    max_size: int = Field(2000, le=5000)
+    alpha: float = Field(0.05, gt=0, le=1)
     with_ppi: bool = False
+    ppi_tier: str = Field("high", pattern="^(high|medium|low)$")
 
 
 class RankingRequest(BaseModel):
-    ranking: dict[str, float]
+    ranking: dict[str, float] = Field(..., max_length=60000)
     collections: list[str] | None = None
-    nperm: int = Field(1000, ge=100, le=10000)
-    min_size: int = 15
-    max_size: int = 500
-    alpha: float = 0.05
+    nperm: int = Field(1000, ge=100, le=int(os.environ.get("INTPATH_MAX_NPERM", "2000")))
+    min_size: int = Field(15, ge=1)
+    max_size: int = Field(500, le=5000)
+    alpha: float = Field(0.05, gt=0, le=1)
     seed: int = 0
 
 
 def create_app(release_root: str | Path | None = None) -> FastAPI:
     root = Path(release_root or os.environ.get("INTPATH_RELEASE_ROOT", "Data/intpathv2/release")).resolve()
-    app = FastAPI(title="IntPath", version=__version__, description="Integrated pathways, PPIs, GO and enrichment")
+    heavy = threading.BoundedSemaphore(int(os.environ.get("INTPATH_MAX_JOBS", "2")))  # concurrent GSEA runs
+    app = FastAPI(title="IntPath", version=__version__,
+                  description="IntPathV2: integrated pathways, PPIs, GO and MSigDB with gene set enrichment")
 
     def available() -> list[str]:
-        return sorted(p.name for p in root.iterdir() if (p / "intpath_genesets.tsv").exists()) if root.exists() else []
-
-    @lru_cache(maxsize=8)
-    def load(org: str):
-        if org not in available():
-            raise HTTPException(404, f"no release for organism {org!r}")
-        sets = read_release(root / org)
-        by_id = {s.id: s for s in sets}
-        by_gene: dict[str, list[str]] = {}
-        for s in sets:
-            for g in s.genes:
-                by_gene.setdefault(g, []).append(s.id)
-        ppi_f = root / org / "intpath_ppi.tsv"
-        ppi = PPINetwork.read(ppi_f) if ppi_f.exists() else None
-        upper: dict[str, str] = {}
-        alias_f = root / org / "intpath_gene_aliases.tsv"
-        if alias_f.exists():  # ids, previous symbols and unambiguous aliases from the build's GeneMapper
-            with open(alias_f) as fh:
-                next(fh)
-                for line in fh:
-                    k, v = line.rstrip("\n").split("\t")
-                    upper[k] = v
-        upper.update({g.upper(): g for g in by_gene})
-        if ppi is not None:
-            upper.update({g.upper(): g for e in ppi.edges for g in e})
-        return sets, by_id, by_gene, ppi, upper
-
-    @lru_cache(maxsize=8)
-    def neighbours(org: str) -> dict[str, set[str]]:
-        ppi = load(org)[3]
-        return ppi.neighbours() if ppi is not None else {}
-
-    def resolve(org: str, org_genes: list[str]) -> tuple[list[str], list[str]]:
-        upper = load(org)[4]
-        found, missing = [], []
-        for g in org_genes:
-            (found.append(upper[g.strip().upper()]) if g.strip().upper() in upper else missing.append(g))
-        return found, missing
+        return sorted(p.name for p in root.iterdir() if (p / "intpath.sqlite").exists()) if root.exists() else []
 
     def org_key(org: str) -> str:
         try:
@@ -105,114 +79,181 @@ def create_app(release_root: str | Path | None = None) -> FastAPI:
         except KeyError:
             return org
 
+    load_lock = threading.Lock()
+
+    @lru_cache(maxsize=12)
+    def _load_cached(key: str) -> Library:
+        return load_library(root / key / "intpath.sqlite", key)
+
+    def _load(key: str) -> Library:
+        with load_lock:  # the preload thread and a first request must not load twice
+            return _load_cached(key)
+
+    def lib(org: str) -> Library:
+        key = org_key(org)
+        if key not in available():
+            raise HTTPException(404, f"no release for organism {org!r}")
+        return _load(key)
+
+    def query(org: str, sql: str, args=()) -> list[dict]:
+        con = lib(org).connect()
+        try:
+            return [dict(r) for r in con.execute(sql, args)]
+        finally:
+            con.close()
+
+    def read_stats(key: str) -> dict:
+        f = root / key / "stats.json"
+        return json.loads(f.read_text()) if f.exists() else {}
+
     @app.get("/", response_class=HTMLResponse)
     def index():
         return (STATIC / "index.html").read_text()
 
+    @app.get("/healthz")
+    def healthz():
+        return {"ok": True, "organisms": available(), "version": __version__}
+
     @app.get("/api/organisms")
     def organisms():
         avail = set(available())
-        return [
-            {"key": o.key, "name": o.name, "taxid": o.taxid, "available": o.key in avail, "in_old_intpath": o.in_old_intpath}
-            for o in orglib.ORGANISMS.values()
-        ]
+        out = []
+        for o in orglib.ORGANISMS.values():
+            row = {"key": o.key, "name": o.name, "taxid": o.taxid, "available": o.key in avail,
+                   "in_old_intpath": o.in_old_intpath}
+            if o.key in avail:
+                st = read_stats(o.key)
+                row.update(built=st.get("built"), tier=st.get("tier"))
+            out.append(row)
+        return out
 
     @app.get("/api/{org}/stats")
     def stats(org: str):
-        f = root / org_key(org) / "stats.json"
-        if not f.exists():
+        st = read_stats(org_key(org))
+        if not st:
             raise HTTPException(404, "no stats")
-        return json.loads(f.read_text())
+        st.pop("files", None)
+        return st
+
+    @app.get("/api/{org}/collections")
+    def collections(org: str):
+        return query(org, "SELECT collection, COUNT(*) AS n FROM gset GROUP BY collection ORDER BY collection")
 
     @app.get("/api/{org}/search")
-    def search(org: str, q: str, limit: int = 50):
-        sets, _, by_gene, _, upper = load(org_key(org))
-        ql = q.strip().lower()
-        hits = [s for s in sets if ql in s.name.lower() or ql == s.id.lower()]
-        gene = upper.get(q.strip().upper())
+    def search(org: str, q: str = "", limit: int = 50):
+        term = q.strip()
+        if not term:
+            return []
+        L = lib(org)
+        limit = min(max(limit, 1), 200)
+        rows = query(org, "SELECT set_id AS id, name, collection, sources, n_genes FROM gset "
+                          "WHERE name LIKE ? OR set_id = ? ORDER BY "
+                          "CASE WHEN lower(name) = lower(?) THEN 0 ELSE 1 END, "
+                          "CASE WHEN collection = 'pathway' THEN 0 WHEN collection LIKE 'GO:%' THEN 1 "
+                          "WHEN collection = 'msigdb:H' THEN 2 ELSE 3 END, length(name) LIMIT ?",
+                     (f"%{term}%", term, term, limit))
+        gene = L.aliases.get(term.upper())
         if gene:
-            ids = set(by_gene.get(gene, ()))
-            hits += [s for s in sets if s.id in ids and s not in hits]
-        return [
-            {"id": s.id, "name": s.name, "collection": s.collection, "sources": s.sources, "n_genes": s.size}
-            for s in hits[:limit]
-        ]
+            seen = {r["id"] for r in rows}
+            for sid in L.by_gene.get(gene, [])[: max(0, limit - len(rows))]:
+                if sid not in seen:
+                    s = L.by_id[sid]
+                    rows.append({"id": s.id, "name": s.name, "collection": s.collection,
+                                 "sources": ",".join(s.sources), "n_genes": s.size})
+        for r in rows:
+            r["sources"] = [x for x in (r["sources"] or "").split(",") if x]
+        return rows
 
     @app.get("/api/{org}/set/{set_id:path}")
     def get_set(org: str, set_id: str):
-        _, by_id, *_ = load(org_key(org))
-        s = by_id.get(set_id)
-        if s is None:
+        head = query(org, "SELECT set_id AS id, name, collection, sources FROM gset WHERE set_id = ?", (set_id,))
+        if not head:
             raise HTTPException(404, "unknown set")
-        return {
-            "id": s.id,
-            "name": s.name,
-            "collection": s.collection,
-            "members": [{"source": a, "pathway": b} for a, b in s.members],
-            "genes": {g: sorted(v) for g, v in sorted(s.genes.items())},
-            "pairs": [
-                {"a": a, "b": b, "relations": sorted(e["rel"]), "sources": sorted(e["src"])}
-                for (a, b), e in sorted(s.pairs.items())
-            ],
-            "links": [{"id": i, "name": by_id[i].name, "collection": by_id[i].collection} for i in s.links if i in by_id],
-        }
+        s = head[0]
+        s["sources"] = [x for x in (s["sources"] or "").split(",") if x]
+        s["members"] = query(org, "SELECT source, source_set_id AS pathway FROM set_member WHERE set_id = ?", (set_id,))
+        s["genes"] = {r["symbol"]: r["sources"].split(",") for r in
+                      query(org, "SELECT symbol, sources FROM set_gene WHERE set_id = ? ORDER BY symbol", (set_id,))}
+        s["pairs"] = [{"a": r["gene_a"], "b": r["gene_b"], "relations": r["relations"].split(","),
+                       "sources": r["sources"].split(",")}
+                      for r in query(org, "SELECT * FROM set_pair WHERE set_id = ? LIMIT 2000", (set_id,))]
+        s["links"] = query(org, "SELECT g.set_id AS id, g.name, g.collection FROM set_link l JOIN gset g "
+                                "ON g.set_id = l.set_b WHERE l.set_a = ?", (set_id,))
+        s["msigdb_equivalents"] = query(org, "SELECT msigdb_name, systematic_name, collection, jaccard "
+                                             "FROM msigdb_equivalent WHERE set_id = ?", (set_id,))
+        return s
 
     @app.get("/api/{org}/gene/{symbol}")
-    def gene(org: str, symbol: str):
-        key = org_key(org)
-        _, by_id, by_gene, ppi, upper = load(key)
-        g = upper.get(symbol.upper())
+    def gene(org: str, symbol: str, limit: int = 300):
+        L = lib(org)
+        g = L.aliases.get(symbol.strip().upper())
         if g is None:
             raise HTTPException(404, "gene not in IntPath")
-        partners = []
-        for h in neighbours(key).get(g, ()):
-            ev = ppi.edges[canon(g, h)]
-            partners.append({"gene": h, "sources": sorted(ev.sources),
-                             "string_score": ev.string_score, "pathway_supported": bool(ev.pathways)})
-        return {
-            "gene": g,
-            "sets": [{"id": i, "name": by_id[i].name, "collection": by_id[i].collection,
-                      "sources": sorted(by_id[i].genes[g])} for i in by_gene.get(g, [])],
-            "ppi_partners": sorted(partners, key=lambda r: (-len(r["sources"]), -r["string_score"])),
-        }
+        sets = query(org, "SELECT g.set_id AS id, g.name, g.collection, sg.sources FROM set_gene sg JOIN gset g "
+                          "ON g.set_id = sg.set_id WHERE sg.symbol = ? ORDER BY g.collection, g.name", (g,))
+        partners = query(org, "SELECT CASE WHEN gene_a = ? THEN gene_b ELSE gene_a END AS gene, sources, n_pmids, "
+                              "string_score, tier, pathway_sets != '' AS pathway_supported FROM ppi "
+                              "WHERE gene_a = ? OR gene_b = ? ORDER BY n_sources DESC, n_pmids DESC LIMIT ?",
+                         (g, g, g, min(max(limit, 1), 2000)))
+        for r in sets + partners:
+            r["sources"] = r["sources"].split(",")
+        return {"gene": g, "sets": sets, "ppi_partners": partners}
 
     @app.post("/api/{org}/enrich/ora")
     def run_ora(org: str, req: GeneListRequest):
-        key = org_key(org)
-        sets = load(key)[0]
-        genes, missing = resolve(key, req.genes)
-        bg = resolve(key, req.background)[0] if req.background else None
-        rows = enrich.ora(genes, sets, background=bg, collections=req.collections, min_size=req.min_size,
-                          max_size=req.max_size)
-        enrich.cluster(rows, sets, alpha=req.alpha)
+        L = lib(org)
+        genes, missing = L.resolve(req.genes)
+        bg = L.resolve(req.background)[0] if req.background else None
+        rows = enrich.ora(genes, L.sets, background=bg, collections=req.collections, min_size=req.min_size,
+                          max_size=req.max_size, index=L.set_index(), universe=L.universe(req.collections))
+        enrich.cluster(rows, L.by_id, alpha=req.alpha)
         return {"n_input": len(req.genes), "n_mapped": len(genes), "unmapped": missing[:200], "results": rows[:500]}
 
     @app.post("/api/{org}/enrich/pairs")
     def run_pairs(org: str, req: GeneListRequest):
-        key = org_key(org)
-        sets, _, _, ppi, _ = load(key)
-        genes, missing = resolve(key, req.genes)
-        rows = enrich.pair_ora(genes, sets, ppi=ppi if req.with_ppi else None,
+        L = lib(org)
+        genes, missing = L.resolve(req.genes)
+        rows = enrich.pair_ora(genes, L.sets, ppi=L.adjacency[req.ppi_tier] if req.with_ppi else None,
                                collections=req.collections or ("pathway",))
         return {"n_input": len(req.genes), "n_mapped": len(genes), "unmapped": missing[:200], "results": rows[:500]}
 
     @app.post("/api/{org}/enrich/gsea")
     def run_gsea(org: str, req: RankingRequest):
-        key = org_key(org)
-        sets = load(key)[0]
-        upper = load(key)[4]
-        ranking = {upper[g.upper()]: v for g, v in req.ranking.items() if g.upper() in upper}
-        rows = enrich.gsea(ranking, sets, collections=req.collections, nperm=req.nperm, min_size=req.min_size,
-                           max_size=req.max_size, seed=req.seed)
-        enrich.cluster(rows, sets, alpha=req.alpha)
+        L = lib(org)
+        ranking: dict[str, float] = {}
+        for g, v in req.ranking.items():
+            s = L.aliases.get(g.strip().upper())
+            if s and s not in ranking:
+                ranking[s] = v
+        if not heavy.acquire(timeout=120):
+            raise HTTPException(503, "server busy, retry shortly")
+        try:
+            rows = enrich.gsea(ranking, L.sets, collections=req.collections, nperm=req.nperm,
+                               min_size=req.min_size, max_size=req.max_size, seed=req.seed)
+        finally:
+            heavy.release()
+        enrich.cluster(rows, L.by_id, alpha=req.alpha)
         return {"n_input": len(req.ranking), "n_mapped": len(ranking), "results": rows[:500]}
 
     @app.get("/download/{org}/{name}")
     def download(org: str, name: str):
-        f = (root / org_key(org) / name).resolve()
-        if f.parent != (root / org_key(org)).resolve() or not f.is_file():
+        if name not in DOWNLOADS:
             raise HTTPException(404, "no such file")
-        return FileResponse(f, filename=f"{org}_{name}")
+        f = root / org_key(org) / name
+        if not f.is_file():
+            raise HTTPException(404, "no such file")
+        return FileResponse(f, filename=f"intpath_{org_key(org)}_{name}")
+
+    if os.environ.get("INTPATH_PRELOAD", "1") == "1":
+        # load released organisms in the background so the first request is fast
+        def preload():
+            for o in available():
+                try:
+                    _load(o)
+                except Exception as exc:  # pragma: no cover
+                    print(f"[intpath] failed to load {o}: {exc}")
+
+        threading.Thread(target=preload, daemon=True).start()
 
     return app
 

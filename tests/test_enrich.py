@@ -60,3 +60,13 @@ def test_cluster_groups_redundant_hits():
     cluster(rows, sets + [dup])
     themes = {r["id"]: r.get("theme") for r in rows}
     assert themes["S0"] == themes["S0b"]
+
+
+def test_ora_index_path_matches_full_scan():
+    genes, sets = lib()
+    index = {}
+    for s in sets:
+        for g in s.genes:
+            index.setdefault(g, []).append(s)
+    query = genes[:30] + genes[500:505] + genes[990:]
+    assert ora(query, sets, index=index) == ora(query, sets)

@@ -3,7 +3,7 @@
 **IntPath** is an integrated pathway and gene-relationship database for model organisms and
 important pathogens. It also provides gene set enrichment analysis on the integrated data.
 This repository holds the public scripts, documentation and summary statistics for
-**IntPathV2** (in development, to be served at **https://intpath.genohub.org**). It also
+**IntPathV2** (in development; a first public release is live at **https://intpath.genohub.org**). It also
 keeps the old IntPath code for reference.
 
 There are two versions:
@@ -31,17 +31,18 @@ IntPathV2 keeps this method and extends it in three ways:
 | | Old IntPath (2012) | IntPathV2 |
 |---|---|---|
 | organisms | human, mouse, yeast, *M. tuberculosis* | the same 4 plus rat, zebrafish, fly, worm, *Arabidopsis*, *E. coli*; extensible registry |
-| pathways | KEGG, WikiPathways, BioCyc | KEGG, **Reactome**, WikiPathways, BioCyc (licensed) |
-| PPIs | STRING (used for distances) | **merged** STRING + BioGRID + IntAct/MITAB with evidence, overlaid on pathways |
+| pathways | KEGG, WikiPathways, BioCyc | KEGG, **Reactome** (with topology and hierarchy), WikiPathways, BioCyc (licensed) |
+| PPIs | STRING (used for distances) | **merged** STRING + BioGRID + IntAct + MINT + HuRI, with evidence and confidence tiers, overlaid on pathways |
+| MSigDB | – | companion library (Hallmarks, C1–C9, mouse M-collections), copies of Reactome/WikiPathways/GO linked rather than double-counted |
 | GO | – | **GO BP/MF/CC**, propagated, lossless merge of redundant terms, linked to pathways |
 | enrichment | hypergeometric "Identify Pathways" | ORA with **source consensus**, **gene-pair (network) enrichment**, **preranked GSEA**, redundancy-aware **themes** |
 | code | Java + MySQL | Python package + REST API + web UI |
 
 The Python port reproduces the old IntPath database exactly for all four of its organisms (human, mouse, yeast,
 *M. tuberculosis*): every related-pathway pair, integrated pathway name and pathway-gene row.
-The first IntPathV2 human build integrates KEGG, Reactome and WikiPathways into 4,003 pathway sets
-(14,849 genes, 173,645 gene pairs). It adds 10,721 GO sets and 85,998 STRING physical
-interactions. See [Docs/METHODS.md](Docs/METHODS.md) and
+The first public IntPathV2 release (open tier, October 2026) covers human, mouse, yeast and
+*M. tuberculosis*. For human it has 3,747 integrated Reactome/WikiPathways pathways, 10,724 GO
+sets, 20,952 MSigDB sets and 1.2 million merged PPI edges. See [Docs/METHODS.md](Docs/METHODS.md) and
 [Docs/OLD_INTPATH.md](Docs/OLD_INTPATH.md).
 
 ## Quick start

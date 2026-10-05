@@ -5,11 +5,11 @@ __pycache__/
 .venv/
 # IntPathV2 downloads and large release tables are rebuilt, not versioned
 Data/intpathv2/raw/
-Data/intpathv2/release/*/intpath_*.tsv
-Data/intpathv2/release/*/intpath.gmt
+Data/intpathv2/release*/*/intpath_*.tsv
+Data/intpathv2/release*/*/intpath.gmt
+Data/intpathv2/release*/*/intpath.sqlite*
 *.part
 *~
 Data/intpathv2/*.log
-Data/intpathv2/release/*/intpath_gene_aliases.tsv
 Data/hufeng-intpathv2-1ced8ff49207/
 Data/hufeng-intpathv2-1ced8ff49207.zip

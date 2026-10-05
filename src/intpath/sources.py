@@ -42,6 +42,9 @@ URLS = {
     "kegg_rest": "https://rest.kegg.jp",
     "string": "https://stringdb-downloads.org/download/{kind}.v12.0/{taxid}.{kind}.v12.0.txt.gz",
     "biogrid": "https://downloads.thebiogrid.org/Download/BioGRID/Latest-Release/BIOGRID-ORGANISM-LATEST.tab3.zip",
+    "intact": "https://ftp.ebi.ac.uk/pub/databases/intact/current/psimitab/intact.zip",
+    # the certificate covers interactome-atlas.org, not www.interactome-atlas.org
+    "huri": "https://interactome-atlas.org/data/HuRI.tsv",
 }
 
 
@@ -82,32 +85,168 @@ def latest_listing(index_url: str, pattern: str) -> str:
 
 def fetch_common(raw: Path, org: Organism) -> dict[str, Path]:
     """Files every build needs: NCBI gene_info (+HGNC for human) and GO."""
-    out = {"gene_info": fetch(org.gene_info_url, raw / "ncbi" / f"{org.key}.gene_info.gz")}
+    gi = raw / "ncbi" / f"{org.key}.gene_info.gz"
+    if org.gene_info_is_shared:  # e.g. All_Archaea_Bacteria: download once, keep only this taxid
+        gi = raw.parent / "shared" / "ncbi" / org.gene_info_url.rsplit("/", 1)[1]
+    out = {"gene_info": fetch(org.gene_info_url, gi)}
+    out["uniprot"] = fetch_uniprot(raw, org)
     if org.hgnc:
         out["hgnc"] = fetch(URLS["hgnc"], raw / "hgnc" / "hgnc_complete_set.txt")
     out["go_obo"] = fetch(URLS["go_obo"], raw / "go" / "go-basic.obo")
     if org.go_gaf_url:
         out["go_gaf"] = fetch(org.go_gaf_url, raw / "go" / f"{org.go_gaf}.gaf.gz")
+    else:  # no GO Consortium GAF (e.g. M. tuberculosis): UniProt GO annotations as a minimal GAF
+        out["go_gaf"] = uniprot_gaf(raw, org)
+    return out
+
+
+UNIPROT_BY_ORG = "https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism"
+UNIPROT_REST = "https://rest.uniprot.org/uniprotkb/stream?format=tsv&query=organism_id:{taxid}&fields={fields}"
+
+
+def fetch_uniprot(raw: Path, org: Organism) -> Path:
+    """UniProt accession -> GeneID mapping: the by_organism idmapping file, else the REST stream."""
+    if org.uniprot:
+        return fetch(f"{UNIPROT_BY_ORG}/{org.uniprot}_idmapping_selected.tab.gz",
+                     raw / "uniprot" / f"{org.key}_idmapping_selected.tab.gz")
+    return fetch(UNIPROT_REST.format(taxid=org.taxid, fields="accession,id,xref_geneid,gene_oln,go_id"),
+                 raw / "uniprot" / f"{org.key}_uniprot_rest.tsv")
+
+
+def uniprot_gaf(raw: Path, org: Organism) -> Path:
+    """Write a minimal GAF 2.2 from UniProt's GO cross-references (evidence code unknown -> 'UniProt')."""
+    src = fetch(UNIPROT_REST.format(taxid=org.taxid, fields="accession,id,xref_geneid,gene_oln,go_id"),
+                raw / "uniprot" / f"{org.key}_uniprot_rest.tsv")
+    out = raw / "go" / f"{org.key}_uniprot.gaf"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with open(src) as fh, open(out, "w") as w:
+        w.write("!gaf-version: 2.2\n! derived from UniProtKB GO cross-references by IntPathV2\n")
+        header = fh.readline().rstrip("\n").split("\t")
+        col = {h: i for i, h in enumerate(header)}
+        for line in fh:
+            f = line.rstrip("\n").split("\t")
+            acc, go_field = f[col["Entry"]], f[col.get("Gene Ontology IDs", len(f) - 1)]
+            for go in (g.strip() for g in go_field.split(";")):
+                if go.startswith("GO:"):
+                    w.write("\t".join(["UniProtKB", acc, acc, "", go, "", "UniProt", "", "", "", "", "protein",
+                                        f"taxon:{org.taxid}", "", "UniProt", "", ""]) + "\n")
     return out
 
 
 # --------------------------------------------------------------------------- #
 # Reactome (all organisms with Reactome species; NCBI Gene ids)
 # --------------------------------------------------------------------------- #
-def reactome(raw: Path, org: Organism, mapper: GeneMapper, lowest_level: bool = False) -> list[SourcePathway]:
+REACTOME = "https://reactome.org/download/current"
+_REACTOME_REL = {"physical association": "PPrel", "association": "PPrel", "direct interaction": "PPrel"}
+
+
+def reactome_version() -> str:
+    try:
+        return fetch_text("https://reactome.org/ContentService/data/database/version").strip()
+    except Exception:
+        return ""
+
+
+def reactome(raw: Path, org: Organism, mapper: GeneMapper, topology: bool = True) -> list[SourcePathway]:
+    """Reactome pathways (all hierarchy levels) with parent links and, where available, gene pairs.
+
+    Gene pairs come from Reactome's interaction export. Each pair carries a
+    context: a complex (-> GPrel, placed in the pathways of Complex_2_Pathway)
+    or a reaction (-> PPrel, placed in the lowest-level pathways that contain
+    both genes). Pairs are then propagated to every ancestor pathway, matching
+    the all-levels membership.
+    """
     if not org.reactome:
         return []
-    key = "reactome_lowest" if lowest_level else "reactome_ncbi"
-    f = fetch(URLS[key], raw / "reactome" / Path(URLS[key]).name)
+    d = raw / "reactome"
+    f = fetch(f"{REACTOME}/NCBI2Reactome_All_Levels.txt", d / "NCBI2Reactome_All_Levels.txt")
     pws: dict[str, SourcePathway] = {}
     with open_text(f) as fh:
         for line in fh:
-            gid, pid, _url, name, ev, species = line.rstrip("\n").split("\t")[:6]
+            gid, pid, _url, name, _ev, species = line.rstrip("\n").split("\t")[:6]
             if species != org.reactome:
                 continue
             sym = mapper.map(gid)
             if sym:
                 pws.setdefault(pid, SourcePathway("Reactome", name, pid)).genes.add(sym)
+
+    rel = fetch(f"{REACTOME}/ReactomePathwaysRelation.txt", d / "ReactomePathwaysRelation.txt")
+    children: dict[str, set[str]] = {}
+    with open_text(rel) as fh:
+        for line in fh:
+            parent, child = line.rstrip("\n").split("\t")[:2]
+            if child in pws:
+                pws[child].parents.add(parent)
+            children.setdefault(parent, set()).add(child)
+    if not topology:
+        return list(pws.values())
+
+    slug = org.reactome.lower().replace(" ", "_")
+    try:
+        inter = fetch(f"{REACTOME}/interactors/reactome.{slug}.interactions.tab-delimited.txt",
+                      d / f"reactome.{slug}.interactions.tab-delimited.txt")
+    except Exception as exc:
+        print(f"[reactome] no interaction export for {org.name}: {exc}")
+        return list(pws.values())
+    lowest: dict[str, set[str]] = {}  # gene -> lowest-level pathways
+    low = fetch(f"{REACTOME}/NCBI2Reactome.txt", d / "NCBI2Reactome.txt")
+    with open_text(low) as fh:
+        for line in fh:
+            gid, pid, _u, _n, _e, species = line.rstrip("\n").split("\t")[:6]
+            if species == org.reactome:
+                sym = mapper.map(gid)
+                if sym:
+                    lowest.setdefault(sym, set()).add(pid)
+    complex_pw: dict[str, set[str]] = {}
+    if org.key == "sapiens":
+        c2p = fetch(f"{REACTOME}/Complex_2_Pathway_human.txt", d / "Complex_2_Pathway_human.txt")
+        with open_text(c2p) as fh:
+            next(fh)
+            for line in fh:
+                cx, pid = line.rstrip("\n").split("\t")[:2]
+                complex_pw.setdefault(cx, set()).add(pid)
+
+    ancestors_memo: dict[str, set[str]] = {}
+
+    def with_ancestors(pid: str) -> set[str]:
+        if pid not in ancestors_memo:
+            out = {pid}
+            for par in pws[pid].parents if pid in pws else ():
+                out |= with_ancestors(par)
+            ancestors_memo[pid] = out
+        return ancestors_memo[pid]
+
+    def gene_of(field: str) -> str | None:
+        for tok in field.split("|"):
+            tok = tok.split(":", 1)[-1]
+            if tok and tok != "-":
+                s = mapper.map(tok)
+                if s:
+                    return s
+        return None
+
+    with open_text(inter) as fh:
+        for line in fh:
+            if line.startswith("#"):
+                continue
+            f = line.rstrip("\n").split("\t")
+            if len(f) < 8:
+                continue
+            a = gene_of(f[2]) or gene_of(f[0]) or gene_of(f[1])
+            b = gene_of(f[5]) or gene_of(f[3]) or gene_of(f[4])
+            if not a or not b or a == b:
+                continue
+            ctx = f[7].replace("reactome:", "")
+            if ctx in complex_pw:
+                targets, kind = complex_pw[ctx], "GPrel"
+            else:
+                targets = lowest.get(a, set()) & lowest.get(b, set())
+                kind = _REACTOME_REL.get(f[6], "PPrel")
+            pair = (a, b) if a <= b else (b, a)
+            for pid in targets:
+                for anc in with_ancestors(pid):
+                    if anc in pws:
+                        pws[anc].pairs.setdefault(pair, set()).add(kind)
     return list(pws.values())
 
 
@@ -305,6 +444,106 @@ def biocyc_pathways_col(path: str | Path, mapper: GeneMapper) -> list[SourcePath
 # --------------------------------------------------------------------------- #
 # PPI sources
 # --------------------------------------------------------------------------- #
+def fetch_biogrid(shared: Path) -> Path:
+    return fetch(URLS["biogrid"], shared / "biogrid" / "BIOGRID-ORGANISM-LATEST.tab3.zip")
+
+
+def fetch_intact(shared: Path) -> Path:
+    """All IntAct evidence (PSI-MITAB 2.7); rows curated by MINT are labelled MINT by parse_mitab."""
+    return fetch(URLS["intact"], shared / "intact" / "intact.zip")
+
+
+def intact_for_taxid(shared: Path, taxid: str) -> Path:
+    """Same-species IntAct rows for one taxid, split once (for every registry organism) from intact.zip.
+
+    intact.txt is ~10 GB; one pass writes small per-taxid files reused by every build.
+    """
+    from .organisms import ORGANISMS
+
+    split = shared / "intact" / "split"
+    target = split / f"{taxid}.mitab.txt"
+    src = fetch_intact(shared)
+    if target.exists() and target.stat().st_mtime >= src.stat().st_mtime:
+        return target
+    split.mkdir(parents=True, exist_ok=True)
+    taxids = {o.taxid for o in ORGANISMS.values()} | {taxid}
+    tax = re.compile(r"taxid:(-?\d+)")
+    outs = {t: open(split / f"{t}.mitab.txt.part", "w") for t in taxids}
+    try:
+        with open_text(src) as fh:
+            header = fh.readline()
+            for out in outs.values():
+                out.write(header)
+            for line in fh:
+                f = line.split("\t", 11)
+                if len(f) < 11:
+                    continue
+                ta, tb = tax.search(f[9]), tax.search(f[10])
+                if ta and tb and ta.group(1) == tb.group(1) and ta.group(1) in outs:
+                    outs[ta.group(1)].write(line)
+    finally:
+        for out in outs.values():
+            out.close()
+    for t in taxids:
+        (split / f"{t}.mitab.txt.part").replace(split / f"{t}.mitab.txt")
+    return target
+
+
+def fetch_huri(shared: Path) -> Path:
+    """HuRI, the Human Reference Interactome (Luck et al. 2020; interactome-atlas.org)."""
+    return fetch(URLS["huri"], shared / "huri" / "HuRI.tsv")
+
+
+def _ppi_feeds():
+    """name -> callable(shared_dir, organism) -> rows (idA, idB, pmid, method, score[, source])."""
+    from . import ppi
+
+    return {
+        "BioGRID": lambda shared, org: ppi.parse_biogrid_tab3(fetch_biogrid(shared), taxid=org.taxid, organism=org.name),
+        # IntAct rows; evidence curated by MINT is labelled "MINT"
+        "IntAct": lambda shared, org: ppi.parse_mitab(intact_for_taxid(shared, org.taxid), taxid=org.taxid),
+        "HuRI": lambda shared, org: ppi.parse_pairs_tsv(fetch_huri(shared)) if org.key == "sapiens" else iter(()),
+    }
+
+
+PPI_FEEDS = _ppi_feeds()
+
+
+def source_versions(raw_root: str | Path, org: Organism, msigdb_version: str | None = None) -> dict[str, str]:
+    """Best-effort record of every source release used in a build (stored in stats.json and the DB)."""
+    raw_root = Path(raw_root)
+    raw = raw_root / org.key
+    v: dict[str, str] = {"STRING": "12.0"}
+    rv = reactome_version()
+    if rv:
+        v["Reactome"] = rv
+    gmts = sorted((raw / "wikipathways").glob("wikipathways-*-gmt-*.gmt"))
+    if gmts:
+        v["WikiPathways"] = re.search(r"wikipathways-(\d+)-", gmts[-1].name).group(1)
+    obo = raw / "go" / "go-basic.obo"
+    if obo.exists():
+        with open(obo) as fh:
+            for line in fh:
+                if line.startswith("data-version:"):
+                    v["GO"] = line.split(":", 1)[1].strip()
+                    break
+    bg = raw_root / "shared" / "biogrid" / "BIOGRID-ORGANISM-LATEST.tab3.zip"
+    if bg.exists():
+        with zipfile.ZipFile(bg) as zf:
+            m = re.search(r"-(\d+\.\d+\.\d+)\.tab3", zf.namelist()[0])
+            if m:
+                v["BioGRID"] = m.group(1)
+    for name, path in (("IntAct/MINT", raw_root / "shared" / "intact" / "intact.zip"),
+                       ("HuRI", raw_root / "shared" / "huri" / "HuRI.tsv"),
+                       ("NCBI Gene", raw / "ncbi" / f"{org.key}.gene_info.gz"),
+                       ("KEGG", raw / "kegg" / (org.kegg or "-") / "list_pathway.txt")):
+        if path.exists():
+            v[name] = "downloaded " + time.strftime("%Y-%m-%d", time.localtime(path.stat().st_mtime))
+    if msigdb_version:
+        v["MSigDB"] = msigdb_version
+    return v
+
+
 def fetch_string(raw: Path, org: Organism, kind: str = "protein.physical.links") -> tuple[Path, Path]:
     tx = org.string_taxid or org.taxid
     links = fetch(URLS["string"].format(kind=kind, taxid=tx), raw / "string" / f"{tx}.{kind}.v12.0.txt.gz")

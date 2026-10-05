@@ -1,0 +1,90 @@
+{
+  "organism": "Mycobacterium tuberculosis H37Rv",
+  "taxid": "83332",
+  "built": "2026-10-05",
+  "sources": {
+    "Reactome": {
+      "pathways": 0,
+      "genes": 0,
+      "gene_pairs": 0,
+      "mean_genes_per_pathway": 0.0,
+      "mean_pairs_per_pathway": 0.0
+    },
+    "WikiPathways": {
+      "error": "no file matching 'wikipathways-\\\\d+-gmt-Mycobacterium_tuberculosis\\\\.gmt' at https://data.wikipathways.org/current/gmt/"
+    }
+  },
+  "pathways": {
+    "sets": 0,
+    "merged_sets": 0,
+    "member_pathways_in_merged_sets": 0,
+    "genes": 0,
+    "gene_pairs": 0,
+    "mean_genes_per_set": 0.0,
+    "mean_pairs_per_set": 0.0
+  },
+  "related_pathway_pairs": 0,
+  "go": {
+    "annotated_terms_propagated": 3711,
+    "go_sets": 1063,
+    "go_terms_in_sets": 1264,
+    "by_namespace": {
+      "GO:BP": 613,
+      "GO:MF": 382,
+      "GO:CC": 68
+    },
+    "pathway_links": 0
+  },
+  "ppi": {
+    "per_source": {
+      "STRING": {
+        "rows": 7690,
+        "mapped_rows": 7022,
+        "unmapped_ids": 62
+      },
+      "BioGRID": {
+        "rows": 4,
+        "mapped_rows": 3,
+        "unmapped_ids": 0
+      },
+      "IntAct": {
+        "rows": 303,
+        "mapped_rows": 199,
+        "unmapped_ids": 1
+      }
+    },
+    "edges": 3574,
+    "edges_by_tier": {
+      "medium": 1541,
+      "high": 2033
+    },
+    "genes": 942,
+    "edges_per_source": {
+      "STRING": 3511,
+      "IntAct": 84,
+      "MINT": 14,
+      "BioGRID": 2
+    },
+    "edges_by_n_sources": {
+      "1": 3542,
+      "2": 27,
+      "3": 5
+    },
+    "pathway_supported_edges": 0
+  },
+  "tier": "open",
+  "versions": {
+    "STRING": "12.0",
+    "Reactome": "97",
+    "GO": "releases/2026-07-26",
+    "BioGRID": "5.0.262",
+    "IntAct/MINT": "downloaded 2026-10-05",
+    "HuRI": "downloaded 2026-10-05"
+  },
+  "aliases": 14437,
+  "mapping": {
+    "exact": 12530,
+    "unmapped": 665,
+    "alias": 1
+  }
+}

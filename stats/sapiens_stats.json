@@ -3,74 +3,198 @@
   "taxid": "9606",
   "built": "2026-10-05",
   "sources": {
-    "KEGG": {
-      "pathways": 372,
-      "genes": 9436,
-      "gene_pairs": 82326,
-      "mean_genes_per_pathway": 106.6,
-      "mean_pairs_per_pathway": 357.97
-    },
     "Reactome": {
       "pathways": 2835,
       "genes": 11363,
-      "gene_pairs": 0,
+      "gene_pairs": 25404,
       "mean_genes_per_pathway": 49.25,
-      "mean_pairs_per_pathway": 0.0
+      "mean_pairs_per_pathway": 81.89
     },
     "WikiPathways": {
       "pathways": 991,
       "genes": 9030,
-      "gene_pairs": 109500,
+      "gene_pairs": 109535,
       "mean_genes_per_pathway": 40.65,
-      "mean_pairs_per_pathway": 175.67
+      "mean_pairs_per_pathway": 175.74
     }
   },
   "pathways": {
-    "sets": 4003,
-    "merged_sets": 130,
-    "member_pathways_in_merged_sets": 315,
-    "genes": 14849,
-    "gene_pairs": 173645,
-    "mean_genes_per_set": 52.43,
-    "mean_pairs_per_set": 72.01
+    "sets": 3747,
+    "merged_sets": 60,
+    "member_pathways_in_merged_sets": 129,
+    "genes": 13377,
+    "gene_pairs": 130424,
+    "mean_genes_per_set": 47.37,
+    "mean_pairs_per_set": 106.0
   },
-  "related_pathway_pairs": 200,
+  "related_pathway_pairs": 83,
   "go": {
     "annotated_terms_propagated": 20956,
-    "go_sets": 10721,
-    "go_terms_in_sets": 11308,
+    "go_sets": 10724,
+    "go_terms_in_sets": 11310,
     "by_namespace": {
       "GO:BP": 7484,
-      "GO:MF": 2060,
+      "GO:MF": 2063,
       "GO:CC": 1177
     },
-    "pathway_links": 1020
+    "pathway_links": 947
+  },
+  "msigdb": {
+    "version": "2026.1.Hs",
+    "collections": {
+      "h.all": {
+        "role": "set",
+        "sets": 50,
+        "links": 0,
+        "tier": "open"
+      },
+      "c1.all": {
+        "role": "set",
+        "sets": 302,
+        "links": 0,
+        "tier": "open"
+      },
+      "c2.cgp": {
+        "role": "set",
+        "sets": 3555,
+        "links": 0,
+        "tier": "open"
+      },
+      "c2.cp.pid": {
+        "role": "set",
+        "sets": 196,
+        "links": 0,
+        "tier": "open"
+      },
+      "c2.cp.reactome": {
+        "role": "link",
+        "sets": 0,
+        "links": 1830,
+        "tier": "open"
+      },
+      "c2.cp.wikipathways": {
+        "role": "link",
+        "sets": 0,
+        "links": 921,
+        "tier": "open"
+      },
+      "c3.all": {
+        "role": "set",
+        "sets": 3714,
+        "links": 0,
+        "tier": "open"
+      },
+      "c4.all": {
+        "role": "set",
+        "sets": 1006,
+        "links": 0,
+        "tier": "open"
+      },
+      "c5.go": {
+        "role": "link",
+        "sets": 0,
+        "links": 9410,
+        "tier": "open"
+      },
+      "c5.hpo": {
+        "role": "set",
+        "sets": 5793,
+        "links": 0,
+        "tier": "open"
+      },
+      "c6.all": {
+        "role": "set",
+        "sets": 189,
+        "links": 0,
+        "tier": "open"
+      },
+      "c7.all": {
+        "role": "set",
+        "sets": 5219,
+        "links": 0,
+        "tier": "open"
+      },
+      "c8.all": {
+        "role": "set",
+        "sets": 866,
+        "links": 0,
+        "tier": "open"
+      },
+      "c9.all": {
+        "role": "set",
+        "sets": 62,
+        "links": 0,
+        "tier": "open"
+      }
+    },
+    "sets": 20952,
+    "equivalents": 12161
   },
   "ppi": {
     "per_source": {
       "STRING": {
         "rows": 173038,
-        "mapped_rows": 172146,
-        "unmapped_ids": 48
+        "mapped_rows": 172150,
+        "unmapped_ids": 47
+      },
+      "BioGRID": {
+        "rows": 1298722,
+        "mapped_rows": 1288428,
+        "unmapped_ids": 114
+      },
+      "IntAct": {
+        "rows": 1047627,
+        "mapped_rows": 1018631,
+        "unmapped_ids": 2735
+      },
+      "HuRI": {
+        "rows": 52548,
+        "mapped_rows": 51782,
+        "unmapped_ids": 27
       }
     },
-    "edges": 85998,
-    "genes": 10673,
+    "edges": 1195441,
+    "edges_by_tier": {
+      "high": 471835,
+      "medium": 723606
+    },
+    "genes": 20929,
     "edges_per_source": {
-      "STRING": 85998
+      "STRING": 86000,
+      "BioGRID": 982819,
+      "MINT": 37966,
+      "IntAct": 544693,
+      "HuRI": 51779
     },
     "edges_by_n_sources": {
-      "1": 85998
+      "1": 766867,
+      "2": 354513,
+      "3": 69204,
+      "4": 4533,
+      "5": 324
     },
-    "pathway_supported_edges": 23175
+    "pathway_supported_edges": 29244
   },
-  "aliases": 214056,
+  "tier": "open",
+  "versions": {
+    "STRING": "12.0",
+    "Reactome": "97",
+    "WikiPathways": "20260910",
+    "GO": "releases/2026-07-26",
+    "BioGRID": "5.0.262",
+    "IntAct/MINT": "downloaded 2026-10-05",
+    "HuRI": "downloaded 2026-10-05",
+    "NCBI Gene": "downloaded 2026-10-05",
+    "KEGG": "downloaded 2026-10-05",
+    "MSigDB": "2026.1.Hs"
+  },
+  "aliases": 432753,
   "mapping": {
-    "exact": 1129620,
-    "unmapped": 96546,
-    "alias": 1126,
-    "previous": 1482,
-    "ambiguous_alias": 204,
-    "ambiguous_previous": 2
+    "exact": 5516670,
+    "unmapped": 148483,
+    "alias": 1334,
+    "previous": 14110,
+    "ambiguous_alias": 214,
+    "ambiguous_previous": 72
   }
 }

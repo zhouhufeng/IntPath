@@ -43,6 +43,17 @@ the old IntPath "no introduced noise" rule.
 
 ## 3. Pathway integration (old IntPath method, reproduced exactly)
 
+Pathway sources: KEGG (REST + KGML), **Reactome** (current release, 97 at the first build:
+all-levels membership, the pathway hierarchy, and gene pairs from Reactome's interaction
+export), WikiPathways (GMT + GPML) and BioCyc (licensed). Reactome gene pairs are assigned to
+pathways as follows:
+- **Complex context:** the pair becomes GPrel, placed in that complex's pathways
+  (`Complex_2_Pathway`).
+- **Reaction context:** the pair becomes PPrel, placed in the lowest-level pathways that
+  contain both genes.
+
+Either way, the pair is then propagated to every ancestor pathway.
+
 1. **Alignment.** Each pair of pathway names is aligned case-insensitively by longest common
    subsequence (LCS). *score* = LCS length;
    *ratio* = 2·score / (len(a) + len(b)). The LCS uses a bit-parallel implementation
@@ -99,18 +110,36 @@ which reproduces those choices. IntPathV2 mode breaks such ties deterministicall
 - **No within-source merging for hierarchical sources** (Reactome, GO). Similar names inside
   Reactome are curated siblings ("RHOC/RHOG GTPase cycle", "RNA Polymerase I/II/III
   Transcription"), not duplicates.
+- **Hierarchy-aware merging.** If a Reactome pathway and one of its ancestors end up in the
+  same group through name chaining, the descendant is detached into its own set. Every
+  Reactome parent/child pair is recorded as a link between the integrated sets.
 - **Stable IDs.** Each integrated pathway's ID (`IP` + SHA-1 of its sorted member IDs) stays the
   same across rebuilds as long as its members don't change.
 
 ## 4. PPI integration
 
-Interactions from STRING (physical subnetwork, combined score ≥ 700 by default), BioGRID
-(physical), PSI-MITAB sources (IntAct, MINT, HuRI) and plain pair lists are mapped to
-official symbols. They are stored as undirected edges and *fully unified*: each edge keeps the
-set of supporting sources, the number of distinct publications, the detection methods and the
-best STRING score. Each edge is then compared with the integrated pathways. If the pair is also
-a curated pathway relation, the edge records which pathways contain it ("pathway-supported"
-edges). PPIs can also be added inside pathways for network enrichment.
+| source | file | used |
+|---|---|---|
+| STRING v12.0 | `protein.physical.links` (+ `protein.info`) | physical subnetwork, combined score ≥ 700 |
+| BioGRID (5.0.262 in the first builds) | `BIOGRID-ORGANISM-LATEST.tab3.zip`, organism member | physical experimental systems, same-species pairs |
+| IntAct and MINT | `intact.zip` (PSI-MITAB 2.7, all IMEx evidence) | same-species pairs. Rows whose source database is MINT are kept as source **MINT**; MINT curates into IntAct under IMEx, so this is the current form of MINT. |
+| HuRI | `interactome-atlas.org/data/HuRI.tsv` | human binary reference interactome (Luck et al. 2020) |
+
+- **Identifiers:** STRING ENSP ids, BioGRID Entrez ids, IntAct UniProt accessions and HuRI
+  Ensembl genes are mapped to official symbols. UniProt accessions resolve through UniProt's
+  per-organism ID mapping (or its REST stream when no file exists).
+- **Unification:** edges are stored undirected and *fully unified*. Each edge keeps:
+  - its supporting sources;
+  - the number of distinct publications;
+  - the detection methods;
+  - the best STRING score;
+  - a **confidence tier**:
+    - **high:** ≥ 2 experimental sources (BioGRID / IntAct / MINT / HuRI), ≥ 2 publications,
+      or STRING ≥ 900;
+    - **medium:** one experimental source or STRING ≥ 700.
+- **Tier use:** tiers are stored, never used to drop edges; users choose one at analysis time.
+- **Pathway overlay:** each edge also records the integrated pathways in which the pair is a
+  curated relation ("pathway-supported" edges).
 
 ## 5. GO integration
 
@@ -126,7 +155,32 @@ edges). PPIs can also be added inside pathways for network enrichment.
   different kinds of concept, so they stay separate gene sets. The links are used to collapse
   redundant enrichment hits.
 
-## 6. Enrichment analysis
+## 6. MSigDB (companion library)
+
+MSigDB (v2026.1 Hs and Mm at the first build) is used next to the integrated data, not merged
+into it:
+- **Gene sets:** collections IntPathV2 has no other source for become gene sets with
+  collection `msigdb:<collection>`. Human: H, C1, C2:CGP, C2:CP:PID, C3, C4, C5:HPO, C6, C7,
+  C8, C9. Mouse: MH, M1, M2:CGP, M3, M5:MPT, M7, M8.
+- **Equivalence links only:** MSigDB's copies of Reactome, WikiPathways, KEGG and GO are not
+  stored again. Each one is linked through its `exactSource` to the IntPathV2 set holding that
+  source pathway, with the Jaccard between the two versions. For human Reactome, 1,830 of
+  1,839 sets map, with median Jaccard 1.0.
+- **Restricted collections:** BioCarta, KEGG_LEGACY and KEGG_MEDICUS have extra licence terms
+  and are built only into the full tier.
+
+## 7. Storage
+
+- **Release database:** each organism release is one SQLite file (`intpath.sqlite`, schema in
+  `src/intpath/db.py` and DATA_FORMATS.md). It holds genes, aliases, sets, memberships with
+  provenance, gene pairs, links, PPI edges with evidence, MSigDB equivalents and the merge log.
+- **Web service:** loads only a compact in-memory library from it (memberships, pathway source
+  support, gene pairs, links, PPI adjacency per tier). Everything else is read per request.
+- **Tiers:** there are two release trees. `release-open/` has no KEGG, BioCyc or restricted
+  MSigDB collections and is redistributable; it's what intpath.genohub.org serves.
+  `release/` is the full tier, for internal use.
+
+## 8. Enrichment analysis
 
 | method | question | statistics |
 |---|---|---|

@@ -16,7 +16,8 @@ from pathlib import Path
 
 from . import go as golib
 from . import ppi as ppilib
-from . import sources
+from . import msigdb, sources
+from .db import write_db
 from .io import read_legacy_source, write_release
 from .mapping import GeneMapper
 from .model import GeneSet, SourcePathway
@@ -68,6 +69,7 @@ def build(
     extra_ppi: tuple[tuple[str, str, str], ...] = (),  # (label, format[biogrid|mitab|tsv], path)
     topology: bool = True,
     public: bool = False,
+    with_msigdb: bool = True,
 ) -> dict:
     raw, out = Path(raw_root) / org.key, Path(out_root) / org.key
     out.mkdir(parents=True, exist_ok=True)
@@ -86,7 +88,12 @@ def build(
             continue
         log(f"extracting {src}")
         fn = extractors[src]
-        pws = fn(raw, org, mapper, topology=topology) if src != "Reactome" else fn(raw, org, mapper)
+        try:
+            pws = fn(raw, org, mapper, topology=topology)
+        except Exception as exc:  # a source without data for this organism must not stop the build
+            log(f"  {src} unavailable for {org.name}: {exc}")
+            stats["sources"][src] = {"error": str(exc)[:200]}
+            continue
         pws = [p for p in pws if p.genes]
         stats["sources"][src] = source_stats(pws)
         log(f"  {src}: {stats['sources'][src]}")
@@ -123,12 +130,32 @@ def build(
         log(f"  {stats['go']}")
         sets += go_sets
 
+    msig = None
+    if with_msigdb:
+        log("MSigDB companion library")
+        msig = msigdb.load(raw, org.key, mapper, sets, public=public)
+        if msig is not None:
+            stats["msigdb"] = {**msig.stats, "sets": len(msig.sets), "equivalents": len(msig.equivalents)}
+            log(f"  MSigDB {msig.version}: {len(msig.sets)} sets, {len(msig.equivalents)} equivalence links")
+            sets += msig.sets
+
+    net = None
     if with_ppi:
-        log("integrating PPIs")
+        log("integrating PPIs (STRING, BioGRID, IntAct/MINT, HuRI)")
+        shared = Path(raw_root) / "shared"
         feeds = []
         if org.string_taxid:
             links, info = sources.fetch_string(raw, org)
             feeds.append(("STRING", ppilib.parse_string(links, info, string_min_score)))
+        for name, feed in sources.PPI_FEEDS.items():
+            if name == "HuRI" and org.key != "sapiens":
+                continue
+            try:
+                rows = feed(shared, org)
+            except Exception as exc:
+                log(f"  {name} unavailable: {exc}")
+                continue
+            feeds.append((name, rows))
         for label, fmt, path in extra_ppi:
             parser = {"biogrid": ppilib.parse_biogrid_tab3, "mitab": ppilib.parse_mitab, "tsv": ppilib.parse_pairs_tsv}[fmt]
             feeds.append((label, parser(path) if fmt == "tsv" else parser(path, taxid=org.taxid)))
@@ -138,12 +165,20 @@ def build(
         stats["ppi"] = {"per_source": rep, **net.summary()}
         log(f"  {stats['ppi']}")
 
+    stats["tier"] = "open" if public else "full"
+    stats["versions"] = sources.source_versions(raw_root, org, msig.version if msig else None)
     stats["files"] = write_release(sets, out)
     release_genes = {g for s in sets for g in s.genes}
-    if with_ppi:
+    if net is not None:
         release_genes |= {g for e in net.edges for g in e}
-    stats["aliases"] = mapper.write_aliases(out / "intpath_gene_aliases.tsv", release_genes)
+    aliases = mapper.alias_table(release_genes)
+    stats["aliases"] = len(aliases)
     stats["mapping"] = dict(mapper.stats)
+    log("writing release database")
+    meta = {"organism_key": org.key, "organism": org.name, "taxid": org.taxid, "built": stats["built"],
+            "tier": stats["tier"], "versions": stats["versions"], "stats": {k: v for k, v in stats.items() if k != "files"}}
+    write_db(out / "intpath.sqlite", sets, meta=meta, aliases=aliases, gene_ids=mapper.entrez, ppi=net,
+             matches=matches, msigdb_equivalents=msig.equivalents if msig else None)
     (out / "stats.json").write_text(json.dumps(stats, indent=2))
     log(f"release written to {out}")
     return stats

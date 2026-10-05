@@ -26,6 +26,8 @@ class SourcePathway:
     genes: set[str] = field(default_factory=set)
     # (geneA, geneB) -> set of unified relation types, as given by the source
     pairs: dict[tuple[str, str], set[str]] = field(default_factory=dict)
+    # source ids of parent pathways in the source's own hierarchy (Reactome)
+    parents: set[str] = field(default_factory=set)
 
     @property
     def key(self) -> tuple[str, str]:
@@ -55,6 +57,13 @@ class GeneSet:
     @property
     def size(self) -> int:
         return len(self.genes)
+
+    @property
+    def members_set(self) -> frozenset[str]:
+        return frozenset(self.genes)
+
+    def n_support(self, gene: str) -> int:
+        return len(self.genes.get(gene, ())) or 1
 
 
 def stable_id(prefix: str, members: list[tuple[str, str]]) -> str:
