@@ -67,7 +67,7 @@ def write_gmt(sets: Iterable[GeneSet], path: str | Path) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# IntPathV2 release tables (tab-delimited, documented in docs/DATA_FORMATS.md)
+# IntPathV2 release tables (tab-delimited, documented in Docs/DATA_FORMATS.md)
 # --------------------------------------------------------------------------- #
 def write_release(sets: list[GeneSet], outdir: str | Path, prefix: str = "intpath") -> dict[str, str]:
     out = Path(outdir)

@@ -10,7 +10,7 @@ There are two versions:
 
 - **Old IntPath**: the database and methods published in 2012, covering human, mouse, yeast and
   *M. tuberculosis*. Everything described in the paper below refers to this version. Its Java
-  code is in `legacy/java/`, and [docs/OLD_INTPATH.md](docs/OLD_INTPATH.md) summarises it.
+  code is in `legacy/java/`, and [Docs/OLD_INTPATH.md](Docs/OLD_INTPATH.md) summarises it.
 - **IntPathV2**: the new version, in development. It is the Python package, web service and
   documentation in this repository.
 
@@ -41,8 +41,8 @@ The Python port reproduces the old IntPath database exactly for all four of its 
 *M. tuberculosis*): every related-pathway pair, integrated pathway name and pathway-gene row.
 The first IntPathV2 human build integrates KEGG, Reactome and WikiPathways into 4,003 pathway sets
 (14,849 genes, 173,645 gene pairs). It adds 10,721 GO sets and 85,998 STRING physical
-interactions. See [docs/METHODS.md](docs/METHODS.md) and
-[docs/OLD_INTPATH.md](docs/OLD_INTPATH.md).
+interactions. See [Docs/METHODS.md](Docs/METHODS.md) and
+[Docs/OLD_INTPATH.md](Docs/OLD_INTPATH.md).
 
 ## Quick start
 
@@ -65,7 +65,7 @@ src/intpath/   names.py (name alignment + union-find)  unify.py (full unificatio
                mapping.py (gene IDs)  organisms.py  sources.py (KEGG/Reactome/WikiPathways/BioCyc)
                ppi.py  go.py  enrich.py (ORA, pairs, GSEA, themes)  build.py  cli.py
 web/           FastAPI service and single-page UI for intpath.genohub.org
-docs/          METHODS, DATA_FORMATS, ROADMAP, DEPLOY, LEGACY_RULES
+Docs/          METHODS, DATA_FORMATS, ROADMAP, DEPLOY, OLD_INTPATH
 legacy/java/   old IntPath Java sources: human pipeline, tools/ (alignment, DB writers), organisms/<org>/
 stats/         summary statistics of builds
 ```
