@@ -15,6 +15,7 @@ public export can exclude restricted sources (``--public``).
 from __future__ import annotations
 
 import re
+import threading
 import time
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -71,6 +72,29 @@ def fetch(url: str, dest: str | Path, *, force: bool = False, retries: int = 3) 
     return dest
 
 
+_KEGG_LOCK = threading.Lock()
+_KEGG_SLOTS = threading.BoundedSemaphore(3)  # at most 3 KEGG requests in flight
+_KEGG_LAST = [0.0]
+
+
+def kegg_get(path: str, dest: Path, *, min_interval: float = 0.4) -> Path:
+    """Fetch rest.kegg.jp/<path> once (cached at ``dest``).
+
+    KEGG allows at most 3 calls per second and academic use only. Request
+    starts are spaced >= ``min_interval`` apart (<= 2.5/s) and at most three
+    run at once, so threads in one process can never exceed the limit.
+    """
+    if dest.exists() and dest.stat().st_size > 0:
+        return dest
+    with _KEGG_SLOTS:
+        with _KEGG_LOCK:
+            wait = _KEGG_LAST[0] + min_interval - time.time()
+            if wait > 0:
+                time.sleep(wait)
+            _KEGG_LAST[0] = time.time()
+        return fetch(f"{URLS['kegg_rest']}/{path}", dest)
+
+
 def fetch_text(url: str) -> str:
     with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=120) as r:
         return r.read().decode("utf-8", "replace")
@@ -85,19 +109,38 @@ def latest_listing(index_url: str, pattern: str) -> str:
 
 def fetch_common(raw: Path, org: Organism) -> dict[str, Path]:
     """Files every build needs: NCBI gene_info (+HGNC for human) and GO."""
-    gi = raw / "ncbi" / f"{org.key}.gene_info.gz"
-    if org.gene_info_is_shared:  # e.g. All_Archaea_Bacteria: download once, keep only this taxid
-        gi = raw.parent / "shared" / "ncbi" / org.gene_info_url.rsplit("/", 1)[1]
-    out = {"gene_info": fetch(org.gene_info_url, gi)}
+    out = {"gene_info": gene_namespace(raw, org)}
     out["uniprot"] = fetch_uniprot(raw, org)
     if org.hgnc:
         out["hgnc"] = fetch(URLS["hgnc"], raw / "hgnc" / "hgnc_complete_set.txt")
-    out["go_obo"] = fetch(URLS["go_obo"], raw / "go" / "go-basic.obo")
+    shared_obo = raw.parent / "shared" / "go" / "go-basic.obo"
+    legacy_obo = raw / "go" / "go-basic.obo"  # earlier builds kept a per-organism copy
+    out["go_obo"] = legacy_obo if legacy_obo.exists() else fetch(URLS["go_obo"], shared_obo)
     if org.go_gaf_url:
         out["go_gaf"] = fetch(org.go_gaf_url, raw / "go" / f"{org.go_gaf}.gaf.gz")
     else:  # no GO Consortium GAF (e.g. M. tuberculosis): UniProt GO annotations as a minimal GAF
         out["go_gaf"] = uniprot_gaf(raw, org)
     return out
+
+
+def gene_namespace(raw: Path, org: Organism) -> Path:
+    """The organism's gene list: NCBI gene_info, else (most prokaryotes) KEGG's own gene list.
+
+    Shared NCBI group files (All_<group>) are split by taxid once; when NCBI Gene
+    has no records for the taxid, ``list/<kegg code>`` provides locus tags and
+    symbols instead (written as <key>.kegg_genes.tsv, read by GeneMapper).
+    """
+    if not org.gene_info_is_shared:
+        return fetch(org.gene_info_url, raw / "ncbi" / f"{org.key}.gene_info.gz")
+    from .catalog import gene_info_for_taxid
+
+    group = org.gene_info.split("/")[0]
+    split = gene_info_for_taxid(raw.parent / "shared", group, org.taxid)
+    if split is not None:
+        return split
+    if not org.kegg:
+        raise FileNotFoundError(f"no gene list for {org.name} (taxid {org.taxid})")
+    return kegg_get(f"list/{org.kegg}", raw / "kegg" / org.kegg / "kegg_genes.tsv")
 
 
 UNIPROT_BY_ORG = "https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism"
@@ -341,13 +384,13 @@ def gpml_pairs(zip_path: Path, mapper: GeneMapper) -> Iterator[tuple[str, dict]]
 # --------------------------------------------------------------------------- #
 # KEGG (REST + KGML; academic use - see licence note above)
 # --------------------------------------------------------------------------- #
-def kegg(raw: Path, org: Organism, mapper: GeneMapper, topology: bool = True, delay: float = 0.35) -> list[SourcePathway]:
+def kegg(raw: Path, org: Organism, mapper: GeneMapper, topology: bool = True) -> list[SourcePathway]:
     if not org.kegg:
         return []
     base = URLS["kegg_rest"]
     d = raw / "kegg" / org.kegg
-    lst = fetch(f"{base}/list/pathway/{org.kegg}", d / "list_pathway.txt")
-    lnk = fetch(f"{base}/link/{org.kegg}/pathway", d / "link_pathway.txt")
+    lst = kegg_get(f"list/pathway/{org.kegg}", d / "list_pathway.txt")
+    lnk = kegg_get(f"link/{org.kegg}/pathway", d / "link_pathway.txt")
     pws: dict[str, SourcePathway] = {}
     for line in open(lst):
         pid, name = line.rstrip("\n").split("\t")
@@ -371,8 +414,7 @@ def kegg(raw: Path, org: Organism, mapper: GeneMapper, topology: bool = True, de
             kgml = d / "kgml" / f"{pid}.xml"
             if not kgml.exists():
                 try:
-                    fetch(f"{base}/get/{pid}/kgml", kgml)
-                    time.sleep(delay)  # be polite to the KEGG REST server
+                    kegg_get(f"get/{pid}/kgml", kgml)
                 except Exception:
                     continue
             p.pairs = kgml_pairs(kgml, sym_of)
@@ -441,6 +483,32 @@ def biocyc_pathways_col(path: str | Path, mapper: GeneMapper) -> list[SourcePath
     return pws
 
 
+def biocyc_legacy(data_root: str | Path, org: Organism, mapper: GeneMapper) -> list[SourcePathway]:
+    """BioCyc pathways (HumanCyc, MouseCyc, YeastCyc, MTBRvCyc) archived by the old IntPath (2012).
+
+    Reads Data/<organism>/normalized/BioCyc/<organism>BioCycNormPthGEN/GPR and maps
+    the 2012 gene symbols to current ones (previous symbols resolve; withdrawn genes
+    are dropped). Licensed data: full tier only, never in --public builds.
+    """
+    from .io import read_legacy_source
+
+    d = Path(data_root) / org.key / "normalized" / "BioCyc"
+    gen, gpr = d / f"{org.key}BioCycNormPthGEN", d / f"{org.key}BioCycNormPthGPR"
+    if not gen.exists():
+        return []
+    out = []
+    for p in read_legacy_source(gen, gpr if gpr.exists() else None, "BioCyc"):
+        genes = {s for s in (mapper.map(g) for g in p.genes) if s}
+        pairs: dict[tuple[str, str], set[str]] = {}
+        for (a, b), rel in p.pairs.items():
+            ma, mb = mapper.map(a), mapper.map(b)
+            if ma and mb and ma != mb:
+                pairs.setdefault((ma, mb), set()).update(rel)
+        if genes:
+            out.append(SourcePathway("BioCyc", p.name, p.name, genes, pairs))
+    return out
+
+
 # --------------------------------------------------------------------------- #
 # PPI sources
 # --------------------------------------------------------------------------- #
@@ -454,38 +522,47 @@ def fetch_intact(shared: Path) -> Path:
 
 
 def intact_for_taxid(shared: Path, taxid: str) -> Path:
-    """Same-species IntAct rows for one taxid, split once (for every registry organism) from intact.zip.
+    """Same-species IntAct rows for one taxid, split once (for every species) from intact.zip.
 
     intact.txt is ~10 GB; one pass writes small per-taxid files reused by every build.
     """
-    from .organisms import ORGANISMS
-
     split = shared / "intact" / "split"
     target = split / f"{taxid}.mitab.txt"
     src = fetch_intact(shared)
-    if target.exists() and target.stat().st_mtime >= src.stat().st_mtime:
-        return target
-    split.mkdir(parents=True, exist_ok=True)
-    taxids = {o.taxid for o in ORGANISMS.values()} | {taxid}
-    tax = re.compile(r"taxid:(-?\d+)")
-    outs = {t: open(split / f"{t}.mitab.txt.part", "w") for t in taxids}
-    try:
+    done = split / ".complete"
+    if not done.exists() or done.stat().st_mtime < src.stat().st_mtime:
+        for old in split.glob("*.mitab.txt"):
+            old.unlink()
+        split.mkdir(parents=True, exist_ok=True)
+        tax = re.compile(r"taxid:(-?\d+)")
+        handles: dict[str, object] = {}  # one append handle per species, at most 256 open
         with open_text(src) as fh:
             header = fh.readline()
-            for out in outs.values():
-                out.write(header)
             for line in fh:
                 f = line.split("\t", 11)
                 if len(f) < 11:
                     continue
                 ta, tb = tax.search(f[9]), tax.search(f[10])
-                if ta and tb and ta.group(1) == tb.group(1) and ta.group(1) in outs:
-                    outs[ta.group(1)].write(line)
-    finally:
-        for out in outs.values():
-            out.close()
-    for t in taxids:
-        (split / f"{t}.mitab.txt.part").replace(split / f"{t}.mitab.txt")
+                if not (ta and tb and ta.group(1) == tb.group(1)):
+                    continue
+                t = ta.group(1)
+                h = handles.get(t)
+                if h is None:
+                    if len(handles) >= 256:
+                        for x in handles.values():
+                            x.close()
+                        handles.clear()
+                    p = split / f"{t}.mitab.txt"
+                    fresh = not p.exists()
+                    h = handles[t] = open(p, "a")
+                    if fresh:
+                        h.write(header)
+                h.write(line)
+        for x in handles.values():
+            x.close()
+        done.touch()
+    if not target.exists():
+        raise FileNotFoundError(f"IntAct has no same-species interactions for taxid {taxid}")
     return target
 
 
@@ -541,6 +618,8 @@ def source_versions(raw_root: str | Path, org: Organism, msigdb_version: str | N
             v[name] = "downloaded " + time.strftime("%Y-%m-%d", time.localtime(path.stat().st_mtime))
     if msigdb_version:
         v["MSigDB"] = msigdb_version
+    if (Path("Data") / org.key / "normalized" / "BioCyc").exists():
+        v["BioCyc"] = "old IntPath archive (2012)"
     return v
 
 

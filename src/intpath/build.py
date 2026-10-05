@@ -70,6 +70,8 @@ def build(
     topology: bool = True,
     public: bool = False,
     with_msigdb: bool = True,
+    legacy_data_root: str | Path | None = "Data",
+    exports: bool = True,
 ) -> dict:
     raw, out = Path(raw_root) / org.key, Path(out_root) / org.key
     out.mkdir(parents=True, exist_ok=True)
@@ -102,6 +104,12 @@ def build(
         pws = sources.biocyc_pathways_col(biocyc_col, mapper)
         stats["sources"]["BioCyc"] = source_stats(pws)
         pathways += pws
+    elif not public and legacy_data_root:
+        pws = sources.biocyc_legacy(legacy_data_root, org, mapper)
+        if pws:
+            log(f"BioCyc from the old IntPath archive: {len(pws)} pathways")
+            stats["sources"]["BioCyc"] = source_stats(pws)
+            pathways += pws
 
     log("merging related pathways (IntPath name alignment + full unification)")
     sets, matches = merge_pathways(pathways, legacy=False, organism=org.key)
@@ -116,7 +124,7 @@ def build(
 
     if with_go and "go_gaf" in files:
         log("building GO gene sets")
-        terms = golib.parse_obo(files["go_obo"])
+        terms = golib.parse_obo_cached(files["go_obo"])
         ann = golib.parse_gaf(files["go_gaf"], terms, mapper)
         full = golib.propagate(ann, terms)
         go_sets = golib.build_go_sets(terms, full)
@@ -167,7 +175,13 @@ def build(
 
     stats["tier"] = "open" if public else "full"
     stats["versions"] = sources.source_versions(raw_root, org, msig.version if msig else None)
-    stats["files"] = write_release(sets, out)
+    if exports:
+        stats["files"] = write_release(sets, out)
+    else:  # wide builds: the database, GMT and stats only
+        from .io import write_gmt
+
+        write_gmt(sets, out / "intpath.gmt")
+        stats["files"] = {"gmt": str(out / "intpath.gmt")}
     release_genes = {g for s in sets for g in s.genes}
     if net is not None:
         release_genes |= {g for e in net.edges for g in e}
@@ -199,3 +213,94 @@ def rebuild_legacy(data_root: str | Path, out_root: str | Path, organism: str = 
     stats = {"related_pathway_pairs": len(matches), **set_stats(sets), "files": files}
     (out / "stats.json").write_text(json.dumps(stats, indent=2))
     return stats
+
+
+# --------------------------------------------------------------------------- #
+# Every KEGG organism
+# --------------------------------------------------------------------------- #
+def _build_one(org: Organism, raw_root: str, out_root: str, public: bool, topology: bool) -> tuple[str, str]:
+    """One catalog organism in a worker process; never raises (returns status)."""
+    import contextlib
+    import io as _io
+
+    out = Path(out_root) / org.key
+    buf = _io.StringIO()
+    try:
+        with contextlib.redirect_stdout(buf):
+            build(org, raw_root, out_root, pathway_sources=() if public else ("KEGG",), with_msigdb=False,
+                  topology=topology, public=public, legacy_data_root=None, exports=False)
+        status = "ok"
+    except Exception as exc:  # one organism must not stop thousands
+        status = f"failed: {type(exc).__name__}: {exc}"[:300]
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "build.log").write_text(buf.getvalue() + "\n" + status + "\n")
+    return org.key, status
+
+
+def build_many(
+    raw_root: str | Path,
+    out_root: str | Path,
+    *,
+    public: bool = False,
+    workers: int = 8,
+    lineage: str | None = None,
+    codes: list[str] | None = None,
+    limit: int | None = None,
+    rebuild: bool = False,
+    topology: bool = False,
+) -> dict:
+    """Build every KEGG organism not in the curated registry (see intpath.catalog).
+
+    Phase 1 (serial): KEGG genome catalog, gene namespaces and, for the full
+    tier, each organism's KEGG pathway list and gene links, all through the
+    rate-limited KEGG gateway. Phase 2 (parallel processes): the builds, which
+    then touch only cached KEGG files.
+    """
+    from concurrent.futures import ProcessPoolExecutor, as_completed
+
+    from . import catalog
+
+    raw_root, out_root = Path(raw_root), Path(out_root)
+    out_root.mkdir(parents=True, exist_ok=True)
+    rows = catalog.build_catalog(raw_root / "shared")
+    catalog.register(rows)
+    catalog.write_registry(rows, out_root / "organisms.json")
+    orgs = catalog.organisms_from_catalog(rows)
+    if lineage:
+        keep = {r["kegg"] for r in rows if r["lineage"].lower().startswith(lineage.lower())}
+        orgs = [o for o in orgs if o.kegg in keep]
+    if codes:
+        orgs = [o for o in orgs if o.kegg in set(codes)]
+    if not rebuild:
+        orgs = [o for o in orgs if not (out_root / o.key / "intpath.sqlite").exists()]
+    if limit:
+        orgs = orgs[:limit]
+    log(f"{len(orgs)} organisms to build ({'open' if public else 'full'} tier)")
+
+    ready: list[Organism] = []
+    for i, org in enumerate(orgs, 1):
+        raw = raw_root / org.key
+        try:
+            sources.gene_namespace(raw, org)
+            if not public:
+                sources.kegg_get(f"list/pathway/{org.kegg}", raw / "kegg" / org.kegg / "list_pathway.txt")
+                sources.kegg_get(f"link/{org.kegg}/pathway", raw / "kegg" / org.kegg / "link_pathway.txt")
+            ready.append(org)
+        except Exception as exc:
+            log(f"  prefetch failed for {org.key}: {exc}")
+        if i % 200 == 0:
+            log(f"  prefetched {i}/{len(orgs)}")
+
+    results: dict[str, str] = {}
+    with ProcessPoolExecutor(max_workers=workers) as pool:
+        futs = [pool.submit(_build_one, o, str(raw_root), str(out_root), public, topology) for o in ready]
+        for i, f in enumerate(as_completed(futs), 1):
+            key, status = f.result()
+            results[key] = status
+            if i % 100 == 0 or status != "ok":
+                log(f"  [{i}/{len(ready)}] {key}: {status}")
+    summary = {"built": sum(1 for s in results.values() if s == "ok"),
+               "failed": {k: v for k, v in results.items() if v != "ok"}}
+    (out_root / f"build_many_{time.strftime('%Y%m%d_%H%M')}.json").write_text(json.dumps(summary, indent=2))
+    log(f"done: {summary['built']} built, {len(summary['failed'])} failed")
+    return summary

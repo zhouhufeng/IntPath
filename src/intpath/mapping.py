@@ -67,6 +67,30 @@ class GeneMapper:
                     m.alias.setdefault(syn.upper(), set()).add(sym)
         return m
 
+    @classmethod
+    def from_kegg_list(cls, path: str | Path) -> "GeneMapper":
+        """KEGG ``list/<org>``: "eco:b0001<TAB>CDS<TAB>pos<TAB>thrL; thr operon leader peptide".
+
+        Used where NCBI Gene has no records (most prokaryotes). The symbol is the
+        first name before ';'; genes without one keep their KEGG id (locus tag).
+        """
+        m = cls()
+        with open_text(path) as fh:
+            for line in fh:
+                f = line.rstrip("\n").split("\t")
+                if not f or ":" not in f[0]:
+                    continue
+                locus = f[0].split(":", 1)[1]
+                desc = f[-1] if len(f) > 1 else ""
+                names = [n.strip() for n in desc.split(";", 1)[0].split(",")] if ";" in desc else []
+                sym = names[0] if names and names[0] and " " not in names[0] else locus
+                m.exact.setdefault(sym.upper(), sym)
+                m.exact[locus.upper()] = sym
+                for n in names[1:]:
+                    if n and " " not in n:
+                        m.alias.setdefault(n.upper(), set()).add(sym)
+        return m
+
     def add_hgnc(self, path: str | Path) -> "GeneMapper":
         """Human layer: HGNC ``hgnc_complete_set.txt`` (approved entries only)."""
         with open_text(path) as fh:
@@ -117,12 +141,11 @@ class GeneMapper:
     @classmethod
     def for_organism(cls, org, raw_dir: str | Path) -> "GeneMapper":
         """Build the mapper from files fetched by :mod:`intpath.sources`."""
+        from .sources import gene_namespace
+
         raw = Path(raw_dir)
-        if org.gene_info_is_shared:
-            gi = raw.parent / "shared" / "ncbi" / org.gene_info_url.rsplit("/", 1)[1]
-            m = cls.from_ncbi_gene_info(gi, taxid=org.taxid)
-        else:
-            m = cls.from_ncbi_gene_info(raw / "ncbi" / f"{org.key}.gene_info.gz")
+        gi = gene_namespace(raw, org)
+        m = cls.from_kegg_list(gi) if gi.name.endswith("kegg_genes.tsv") else cls.from_ncbi_gene_info(gi)
         if org.hgnc and (raw / "hgnc" / "hgnc_complete_set.txt").exists():
             m.add_hgnc(raw / "hgnc" / "hgnc_complete_set.txt")
         up = raw / "uniprot" / f"{org.key}_idmapping_selected.tab.gz"

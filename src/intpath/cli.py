@@ -64,6 +64,17 @@ def main(argv: list[str] | None = None) -> None:
     b.add_argument("--no-topology", action="store_true", help="skip KGML/GPML gene-pair extraction")
     b.add_argument("--public", action="store_true", help="exclude licence-restricted sources (KEGG, BioCyc)")
 
+    bm = sub.add_parser("build-many", help="build every KEGG organism outside the curated registry")
+    bm.add_argument("--raw", default="Data/intpathv2/raw")
+    bm.add_argument("--out", default=None, help="default: Data/intpathv2/release[-open]")
+    bm.add_argument("--public", action="store_true", help="open tier: no KEGG (GO + PPIs only)")
+    bm.add_argument("--workers", type=int, default=8)
+    bm.add_argument("--lineage", help="KEGG lineage prefix, e.g. 'Eukaryotes' or 'Prokaryotes;Bacteria'")
+    bm.add_argument("--codes", help="comma list of KEGG organism codes")
+    bm.add_argument("--limit", type=int)
+    bm.add_argument("--rebuild", action="store_true")
+    bm.add_argument("--topology", action="store_true", help="also download KGML gene pairs (slow: ~150-400 KEGG calls/organism)")
+
     lg = sub.add_parser("legacy", help="re-run the 2012 merge on archived old IntPath normalized files")
     lg.add_argument("--data", default="Data")
     lg.add_argument("--out", default="Data/intpathv2/release")
@@ -109,6 +120,15 @@ def main(argv: list[str] | None = None) -> None:
                       string_min_score=a.string_min_score, extra_ppi=extra, topology=not a.no_topology,
                       public=a.public, with_msigdb=not a.no_msigdb)
         print(json.dumps({k: v for k, v in stats.items() if k != "files"}, indent=2))
+        return
+
+    if a.cmd == "build-many":
+        from .build import build_many
+
+        out = a.out or ("Data/intpathv2/release-open" if a.public else "Data/intpathv2/release")
+        print(json.dumps(build_many(a.raw, out, public=a.public, workers=a.workers, lineage=a.lineage,
+                                    codes=a.codes.split(",") if a.codes else None, limit=a.limit,
+                                    rebuild=a.rebuild, topology=a.topology), indent=2)[:2000])
         return
 
     if a.cmd == "legacy":

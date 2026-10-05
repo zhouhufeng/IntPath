@@ -77,6 +77,19 @@ def parse_obo(path: str | Path) -> dict[str, Term]:
     return terms
 
 
+_OBO_CACHE: dict[str, tuple[float, dict]] = {}
+
+
+def parse_obo_cached(path: str | Path) -> dict[str, Term]:
+    """parse_obo once per process (build-many workers build hundreds of organisms each)."""
+    key = str(Path(path).resolve())
+    mtime = Path(path).stat().st_mtime
+    hit = _OBO_CACHE.get(key)
+    if hit is None or hit[0] != mtime:
+        _OBO_CACHE[key] = (mtime, parse_obo(path))
+    return _OBO_CACHE[key][1]
+
+
 def ancestors(terms: dict[str, Term]) -> dict[str, set[str]]:
     memo: dict[str, set[str]] = {}
 

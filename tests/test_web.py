@@ -36,7 +36,8 @@ def client(tmp_path, monkeypatch):
 
 def test_api_roundtrip(client):
     orgs = client.get("/api/organisms").json()
-    assert any(o["key"] == "sapiens" and o["available"] and o["tier"] == "open" for o in orgs)
+    assert any(o["key"] == "sapiens" and o["available"] and o["curated"] for o in orgs)
+    assert client.get("/api/sapiens/stats").json()["tier"] == "open"
     r = client.post("/api/human/enrich/ora", json={"genes": [f"g{i}" for i in range(1, 20)] + ["alias0", "NOPE"]}).json()
     assert r["n_mapped"] == 20 and r["unmapped"] == ["NOPE"] and r["results"][0]["id"] in ("IP0", "M1")
     assert r["results"][0]["theme"] == 1
@@ -56,3 +57,27 @@ def test_api_roundtrip(client):
     assert client.get("/download/sapiens/..%2Fsecret").status_code == 404
     assert client.get("/healthz").json()["ok"]
     assert client.get("/").status_code == 200
+
+
+def test_licensed_section_requires_sign_in_and_blocks_downloads(tmp_path, monkeypatch):
+    monkeypatch.setenv("INTPATH_PRELOAD", "0")
+    for tier in ("open", "full"):
+        d = tmp_path / tier / "sapiens"
+        d.mkdir(parents=True)
+        sets = [GeneSet("IP0", "Apoptosis", "pathway", {f"G{i}": {"Reactome"} for i in range(20)}, members=[("Reactome", "R1")])]
+        if tier == "full":
+            sets.append(GeneSet("IPK", "Apoptosis - KEGG", "pathway", {f"G{i}": {"KEGG"} for i in range(20)}, members=[("KEGG", "hsa04210")]))
+        write_db(d / "intpath.sqlite", sets, meta={})
+        (d / "stats.json").write_text('{"tier": "%s"}' % tier)
+        (d / "intpath.gmt").write_text("x")
+    from web.app import create_app
+
+    c = TestClient(create_app(tmp_path / "open", licensed_root=tmp_path / "full"))
+    body = {"genes": [f"G{i}" for i in range(10)]}
+    assert {r["id"] for r in c.post("/api/sapiens/enrich/ora", json=body).json()["results"]} == {"IP0"}
+    assert c.post("/licensed/api/sapiens/enrich/ora", json=body).status_code == 401
+    signed = {"X-IGVF-User": "alice"}
+    res = c.post("/licensed/api/sapiens/enrich/ora", json=body, headers=signed).json()["results"]
+    assert {r["id"] for r in res} == {"IP0", "IPK"} and any("KEGG" in r["sources"] for r in res)
+    assert c.get("/download/sapiens/intpath.gmt").status_code == 200
+    assert c.get("/licensed/download/sapiens/intpath.gmt", headers=signed).status_code == 404

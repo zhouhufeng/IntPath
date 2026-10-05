@@ -19,6 +19,12 @@ REST API
     POST /api/{org}/enrich/pairs               {"genes": [...], "with_ppi": true, "ppi_tier": "high"}
     POST /api/{org}/enrich/gsea                {"ranking": {"GENE": score}, "nperm": 1000}
     GET  /download/{org}/{file}                release files
+
+Licensed section (/licensed/...): the same API over the full-tier releases
+(KEGG, BioCyc, MSigDB BioCarta/KEGG_MEDICUS), for signed-in users only. The
+gateway authenticates every /licensed/ request with the shared sign-in gate and
+passes X-IGVF-User; requests without it are refused here as well. Downloads are
+disabled there: licensed data is offered for analysis, not redistribution.
 """
 
 from __future__ import annotations
@@ -30,7 +36,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 
 from intpath import __version__, enrich
@@ -64,14 +70,46 @@ class RankingRequest(BaseModel):
     seed: int = 0
 
 
-def create_app(release_root: str | Path | None = None) -> FastAPI:
+def _register_generated(root: Path) -> None:
+    """Make catalog organisms (every KEGG genome, see intpath.catalog) resolvable by key/code/taxid."""
+    f = root / "organisms.json"
+    if not f.exists():
+        return
+    for d in json.loads(f.read_text()):
+        if d["key"] in orglib.ORGANISMS:
+            continue
+        d.pop("lineage", None)
+        d["aliases"] = tuple(d.get("aliases", ()))
+        orglib.ORGANISMS[d["key"]] = orglib.Organism(**d)
+
+
+def create_app(release_root: str | Path | None = None, *, licensed: bool = False,
+               licensed_root: str | Path | None = None) -> FastAPI:
     root = Path(release_root or os.environ.get("INTPATH_RELEASE_ROOT", "Data/intpathv2/release")).resolve()
     heavy = threading.BoundedSemaphore(int(os.environ.get("INTPATH_MAX_JOBS", "2")))  # concurrent GSEA runs
-    app = FastAPI(title="IntPath", version=__version__,
+    app = FastAPI(title="IntPath (licensed)" if licensed else "IntPath", version=__version__,
                   description="IntPathV2: integrated pathways, PPIs, GO and MSigDB with gene set enrichment")
 
+    if licensed:
+        @app.middleware("http")
+        async def require_signed_in(request, call_next):
+            if not request.headers.get("x-igvf-user"):
+                return JSONResponse({"error": "sign in at https://intpath.genohub.org/licensed/"}, status_code=401)
+            return await call_next(request)
+
+    _register_generated(root)
+
+    avail_cache: dict = {"t": 0.0, "v": []}
+
     def available() -> list[str]:
-        return sorted(p.name for p in root.iterdir() if (p / "intpath.sqlite").exists()) if root.exists() else []
+        # thousands of release directories: rescan at most once a minute
+        import time as _t
+
+        if _t.time() - avail_cache["t"] > 60:
+            avail_cache["v"] = sorted(p.name for p in root.iterdir() if (p / "intpath.sqlite").exists()) \
+                if root.exists() else []
+            avail_cache["t"] = _t.time()
+        return avail_cache["v"]
 
     def org_key(org: str) -> str:
         try:
@@ -112,19 +150,20 @@ def create_app(release_root: str | Path | None = None) -> FastAPI:
 
     @app.get("/healthz")
     def healthz():
-        return {"ok": True, "organisms": available(), "version": __version__}
+        return {"ok": True, "organisms": available(), "version": __version__, "licensed": licensed}
 
     @app.get("/api/organisms")
-    def organisms():
+    def organisms(all: bool = False):  # noqa: A002
+        """Organisms with a release (all=true also lists registered organisms without one)."""
         avail = set(available())
         out = []
         for o in orglib.ORGANISMS.values():
-            row = {"key": o.key, "name": o.name, "taxid": o.taxid, "available": o.key in avail,
-                   "in_old_intpath": o.in_old_intpath}
-            if o.key in avail:
-                st = read_stats(o.key)
-                row.update(built=st.get("built"), tier=st.get("tier"))
-            out.append(row)
+            if o.key not in avail and not all:
+                continue
+            out.append({"key": o.key, "name": o.name, "taxid": o.taxid, "kegg": o.kegg,
+                        "available": o.key in avail, "in_old_intpath": o.in_old_intpath,
+                        "curated": o.key in orglib.CURATED})
+        out.sort(key=lambda r: (not r["curated"], r["name"].lower()))
         return out
 
     @app.get("/api/{org}/stats")
@@ -237,7 +276,7 @@ def create_app(release_root: str | Path | None = None) -> FastAPI:
 
     @app.get("/download/{org}/{name}")
     def download(org: str, name: str):
-        if name not in DOWNLOADS:
+        if licensed or name not in DOWNLOADS:
             raise HTTPException(404, "no such file")
         f = root / org_key(org) / name
         if not f.is_file():
@@ -254,6 +293,12 @@ def create_app(release_root: str | Path | None = None) -> FastAPI:
                     print(f"[intpath] failed to load {o}: {exc}")
 
         threading.Thread(target=preload, daemon=True).start()
+
+    if not licensed:
+        lic = Path(licensed_root or os.environ.get("INTPATH_LICENSED_ROOT", "")) if (
+            licensed_root or os.environ.get("INTPATH_LICENSED_ROOT")) else None
+        if lic is not None and lic.exists():
+            app.mount("/licensed", create_app(lic, licensed=True))
 
     return app
 

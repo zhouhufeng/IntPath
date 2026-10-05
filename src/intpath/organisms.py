@@ -83,6 +83,9 @@ ORGANISMS: dict[str, Organism] = {
 }
 
 
+CURATED = frozenset(ORGANISMS)  # hand-curated entries (all sources); others come from intpath.catalog
+
+
 def get(name: str) -> Organism:
     """Look up by key, binomial, alias, KEGG code or taxid (case-insensitive)."""
     q = name.strip().lower()

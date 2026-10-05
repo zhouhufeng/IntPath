@@ -69,11 +69,14 @@ footer { color: var(--muted); font-size: 12px; padding: 24px 0; border-top: 1px 
   <nav><button data-tab="enrich" class="on">Enrichment</button><button data-tab="browse">Browse</button><button data-tab="about">Data &amp; methods</button></nav>
 </div></header>
 
+<div class="wrap" id="tierNote" style="padding-top:12px;font-size:13px;color:var(--muted)"></div>
 <main class="wrap">
   <section id="tab-enrich" class="grid">
     <div class="card">
       <label for="org">Organism</label>
-      <select id="org"></select>
+      <input id="org" list="orgList" placeholder="Search organism: name, KEGG code or taxid" autocomplete="off">
+      <datalist id="orgList"></datalist>
+      <div class="hint" id="orgHint"></div>
       <label>Analysis</label>
       <div class="row seg" id="mode">
         <button data-m="ora" class="on">Gene list</button><button data-m="pairs">Gene pairs</button><button data-m="gsea">Ranked (GSEA)</button>
@@ -123,6 +126,8 @@ footer { color: var(--muted); font-size: 12px; padding: 24px 0; border-top: 1px 
 
 <script>
 const $ = s => document.querySelector(s);
+// the same page serves the public site (/) and the signed-in licensed section (/licensed/)
+const BASE = location.pathname.startsWith("/licensed") ? "/licensed" : "";
 let mode = "ora";
 const examples = {
   ora: "TP53 MDM2 CDKN1A BAX BBC3 PMAIP1 GADD45A SESN1 SESN2 RRM2B TP53I3 FAS TNFRSF10B ZMAT3 DDB2 XPC POLH RPS27L TRIAP1 AEN",
@@ -145,19 +150,22 @@ document.querySelectorAll("#mode button").forEach(b => b.onclick = () => {
 });
 $("#example").onclick = () => { $("#input").value = examples[mode]; };
 
+let ORGS = [];
 async function loadOrganisms() {
-  const r = await fetch("/api/organisms").then(r => r.json());
-  $("#org").innerHTML = r.map(o => `<option value="${o.key}" ${o.available ? "" : "disabled"}>${esc(o.name)}${o.available ? "" : " (not built)"}</option>`).join("");
-  const first = r.find(o => o.available); if (first) $("#org").value = first.key;
+  ORGS = await fetch(`${BASE}/api/organisms`).then(r => r.json());
+  // curated organisms first; thousands of KEGG organisms are reachable through the search box
+  $("#orgList").innerHTML = ORGS.map(o => `<option value="${esc(o.name)} [${esc(o.key)}]">`).join("");
+  if (ORGS.length) setOrg(ORGS.find(o => o.key === "sapiens") || ORGS[0]);
 }
-const org = () => $("#org").value;
+function setOrg(o) { $("#org").value = `${o.name} [${o.key}]`; $("#org").dataset.key = o.key; }
+const org = () => $("#org").dataset.key || "sapiens";
 const cols = () => [...document.querySelectorAll("#cols input:checked")].map(i => i.value);
 
 $("#run").onclick = async () => {
   const text = $("#input").value.trim();
   if (!text) return;
   $("#status").textContent = "Running…";
-  let body, url = `/api/${org()}/enrich/${mode}`;
+  let body, url = `${BASE}/api/${org()}/enrich/${mode}`;
   if (mode === "gsea") {
     const ranking = {};
     text.split(/\n/).forEach(l => { const f = l.split(/[\t,; ]+/); const v = parseFloat(f[1]); if (f[0] && !isNaN(v)) ranking[f[0]] = v; });
@@ -192,8 +200,8 @@ const link = r => `<a onclick="showSet('${esc(r.id)}')">${esc(r.name)}</a><div>$
 $("#search").onclick = async () => {
   const term = $("#q").value.trim();
   const [r, g] = await Promise.all([
-    fetch(`/api/${org()}/search?q=${encodeURIComponent(term)}`).then(r => r.json()),
-    fetch(`/api/${org()}/gene/${encodeURIComponent(term)}?limit=1`).then(r => r.ok ? r.json() : null)]);
+    fetch(`${BASE}/api/${org()}/search?q=${encodeURIComponent(term)}`).then(r => r.json()),
+    fetch(`${BASE}/api/${org()}/gene/${encodeURIComponent(term)}?limit=1`).then(r => r.ok ? r.json() : null)]);
   $("#detail").innerHTML = g ? `<p>Gene <a onclick="showGene('${esc(g.gene)}')"><b>${esc(g.gene)}</b></a>: ${g.sets.length} gene sets — open the gene page for PPI partners.</p>` : "";
   $("#browse").innerHTML = "<tr><th>Name</th><th>Library</th><th>Sources</th><th>Genes</th></tr>" + r.map(s =>
     `<tr><td><a onclick="showSet('${esc(s.id)}')">${esc(s.name)}</a></td><td>${esc(s.collection)}</td><td>${s.sources.map(x => `<span class="chip">${esc(x)}</span>`).join("")}</td><td class="num">${s.n_genes}</td></tr>`).join("");
@@ -202,7 +210,7 @@ $("#q").onkeydown = e => { if (e.key === "Enter") $("#search").click(); };
 
 async function showSet(id) {
   document.querySelector('nav button[data-tab="browse"]').click();
-  const s = await fetch(`/api/${org()}/set/${encodeURIComponent(id)}`).then(r => r.json());
+  const s = await fetch(`${BASE}/api/${org()}/set/${encodeURIComponent(id)}`).then(r => r.json());
   const genes = Object.entries(s.genes);
   $("#detail").innerHTML = `<h3>${esc(s.name)} <span class="chip">${esc(s.id)}</span></h3>
     <p><b>Merged from:</b> ${s.members.map(m => `<span class="chip">${esc(m.source)}: ${esc(m.pathway)}</span>`).join(" ")}</p>
@@ -214,7 +222,7 @@ async function showSet(id) {
 }
 
 async function showGene(sym) {
-  const g = await fetch(`/api/${org()}/gene/${encodeURIComponent(sym)}`).then(r => r.json());
+  const g = await fetch(`${BASE}/api/${org()}/gene/${encodeURIComponent(sym)}`).then(r => r.json());
   $("#detail").innerHTML = `<h3>${esc(g.gene)}</h3>
     <p><b>${g.sets.length} gene sets</b></p>
     <div class="tablewrap"><table><tr><th>Set</th><th>Library</th><th>Support</th></tr>${g.sets.slice(0, 400).map(s => `<tr><td><a onclick="showSet('${esc(s.id)}')">${esc(s.name)}</a></td><td>${esc(s.collection)}</td><td>${s.sources.map(x => `<span class="chip">${esc(x)}</span>`).join("")}</td></tr>`).join("")}</table></div>
@@ -225,7 +233,7 @@ async function showGene(sym) {
 const COLLECTION_LABELS = {"pathway": "Pathways (integrated)", "GO:BP": "GO biological process", "GO:MF": "GO molecular function", "GO:CC": "GO cellular component", "msigdb:H": "MSigDB Hallmarks"};
 const DEFAULT_ON = new Set(["pathway", "GO:BP", "msigdb:H"]);
 async function loadCollections() {
-  const rows = await fetch(`/api/${org()}/collections`).then(r => r.ok ? r.json() : []);
+  const rows = await fetch(`${BASE}/api/${org()}/collections`).then(r => r.ok ? r.json() : []);
   const groups = new Map();
   for (const {collection, n} of rows) {
     // group MSigDB sub-collections by their top level (msigdb:C2:CGP -> msigdb:C2)
@@ -236,7 +244,7 @@ async function loadCollections() {
 }
 
 async function loadStats() {
-  const s = await fetch(`/api/${org()}/stats`).then(r => r.ok ? r.json() : null);
+  const s = await fetch(`${BASE}/api/${org()}/stats`).then(r => r.ok ? r.json() : null);
   if (!s) { $("#stats").innerHTML = ""; return; }
   const items = [["Integrated pathways", s.pathways?.sets], ["Merged from ≥2 pathways", s.pathways?.merged_sets], ["Pathway genes", s.pathways?.genes], ["Pathway gene pairs", s.pathways?.gene_pairs], ["GO gene sets", s.go?.go_sets], ["MSigDB gene sets", s.msigdb?.sets], ["PPI edges", s.ppi?.edges], ["High-confidence PPI edges", s.ppi?.edges_by_tier?.high]];
   $("#stats").innerHTML = items.filter(i => i[1] != null).map(([k, v]) => `<div class="stat"><b>${(+v).toLocaleString()}</b><span>${k} · ${esc(s.organism)}</span></div>`).join("");
@@ -244,7 +252,15 @@ async function loadStats() {
   const files = ["intpath.gmt", "intpath_genesets.tsv", "intpath_set_genes.tsv", "intpath_set_genepairs.tsv", "intpath_set_members.tsv", "intpath_ppi.tsv", "related_pathways.tsv"];
   $("#downloads").innerHTML = "<b>Downloads:</b> " + files.map(f => `<a href="/download/${org()}/${f}">${f}</a>`).join(" · ");
 }
-$("#org").onchange = () => { loadCollections(); if (!$("#tab-about").classList.contains("hidden")) loadStats(); };
+$("#tierNote").innerHTML = BASE
+  ? `<b>Licensed section</b>, signed-in users only. Adds KEGG, BioCyc (old IntPath archive, 2012) and MSigDB BioCarta / KEGG_MEDICUS. Each result names its source database; use is subject to those providers' terms (KEGG: academic use by academic users). Analysis only; downloads are disabled. <a href="/">Back to the public site</a>`
+  : `Public open-licence data (Reactome, WikiPathways, GO, MSigDB, merged PPIs). Signed-in users can also <a href="/licensed/">analyse with KEGG, BioCyc and BioCarta</a>.`;
+if (BASE) { const d = document.getElementById("downloads"); if (d) d.style.display = "none"; }
+$("#org").onchange = () => {
+  const v = $("#org").value.trim(), code = (v.match(/\[([^\]]+)\]$/) || [])[1];
+  const o = ORGS.find(x => x.key === code) || ORGS.find(x => x.name.toLowerCase() === v.toLowerCase() || x.kegg === v || x.taxid === v);
+  if (!o) { $("#orgHint").textContent = "No IntPathV2 release for that organism yet."; return; }
+  $("#orgHint").textContent = ""; setOrg(o); loadCollections(); if (!$("#tab-about").classList.contains("hidden")) loadStats(); };
 loadOrganisms().then(loadCollections);
 </script>
 </body>
