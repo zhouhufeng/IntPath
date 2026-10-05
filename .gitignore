@@ -3,13 +3,13 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 .venv/
-# V3 downloads and large release tables are rebuilt, not versioned
-Data/v3/raw/
-Data/v3/release/*/intpath_*.tsv
-Data/v3/release/*/intpath.gmt
+# IntPathV2 downloads and large release tables are rebuilt, not versioned
+Data/intpathv2/raw/
+Data/intpathv2/release/*/intpath_*.tsv
+Data/intpathv2/release/*/intpath.gmt
 *.part
 *~
-Data/v3/*.log
-Data/v3/release/*/intpath_gene_aliases.tsv
+Data/intpathv2/*.log
+Data/intpathv2/release/*/intpath_gene_aliases.tsv
 Data/hufeng-intpathv2-1ced8ff49207/
 Data/hufeng-intpathv2-1ced8ff49207.zip

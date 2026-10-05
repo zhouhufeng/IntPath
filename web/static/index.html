@@ -109,7 +109,7 @@ footer { color: var(--muted); font-size: 12px; padding: 24px 0; border-top: 1px 
     <div class="card">
       <div class="stats" id="stats"></div>
       <h3>How IntPath integrates</h3>
-      <p>Pathways from KEGG, Reactome, WikiPathways (and BioCyc where licensed) are normalised to official gene symbols. Related pathways are found by case-insensitive longest-common-subsequence alignment of their names (accepted when the shorter name aligns almost completely with ratio ≥ 0.5, or ratio &gt; 0.91), guarded by curated mismatch lists and, in V3, shared genes. Related pathways are grouped with a disjoint set and <em>fully unified</em>: every gene and gene pair is kept, with the source databases that support it.</p>
+      <p>Pathways from KEGG, Reactome, WikiPathways (and BioCyc where licensed) are normalised to official gene symbols. Related pathways are found by case-insensitive longest-common-subsequence alignment of their names (accepted when the shorter name aligns almost completely with ratio ≥ 0.5, or ratio &gt; 0.91), guarded by curated mismatch lists and, in IntPathV2, shared genes. Related pathways are grouped with a disjoint set and <em>fully unified</em>: every gene and gene pair is kept, with the source databases that support it.</p>
       <p>GO annotations are propagated up the ontology; terms with identical gene sets on one lineage are merged without loss and linked to equivalent pathways. PPIs from STRING, BioGRID and IntAct are merged per gene pair with their evidence, and marked when the pair is also a curated pathway relation.</p>
       <h3>Enrichment</h3>
       <p><b>Gene list</b>: hypergeometric test with BH-FDR, plus <em>consensus</em>, the share of hit genes that ≥ 2 source databases place in the pathway. <b>Gene pairs</b>: tests whether curated relations among your genes concentrate in a pathway's wiring. <b>Ranked</b>: preranked GSEA with size-matched permutation nulls (NES, nominal p, FDR).</p>
@@ -117,7 +117,7 @@ footer { color: var(--muted); font-size: 12px; padding: 24px 0; border-top: 1px 
     </div>
   </section>
 </main>
-<footer class="wrap">IntPath V3 · <a href="/docs">API</a> · source code: github.com/zhouhufeng/IntPath</footer>
+<footer class="wrap">IntPathV2 · <a href="/docs">API</a> · source code: github.com/zhouhufeng/IntPath</footer>
 
 <script>
 const $ = s => document.querySelector(s);

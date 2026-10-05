@@ -150,7 +150,7 @@ def build(
 
 
 def rebuild_legacy(data_root: str | Path, out_root: str | Path, organism: str = "sapiens") -> dict:
-    """Re-run the merge on the archived V2 normalized files (reproducibility check)."""
+    """Re-run the merge on the archived old IntPath normalized files (reproducibility check)."""
     n = Path(data_root) / organism / "normalized"
     order = [("K", "KEGG"), ("C", "BioCyc"), ("W", "WikiPathways")]  # legacy comparison order
     pws = []

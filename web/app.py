@@ -1,7 +1,7 @@
-"""IntPath V3 web service (intpath.genohub.org).
+"""IntPathV2 web service (intpath.genohub.org).
 
-    uvicorn web.app:app            # serves Data/v3/release (env INTPATH_RELEASE_ROOT)
-    intpath serve --release-root Data/v3/release
+    uvicorn web.app:app            # serves Data/intpathv2/release (env INTPATH_RELEASE_ROOT)
+    intpath serve --release-root Data/intpathv2/release
 
 REST API (all organisms that have a built release directory):
     GET  /api/organisms
@@ -56,7 +56,7 @@ class RankingRequest(BaseModel):
 
 
 def create_app(release_root: str | Path | None = None) -> FastAPI:
-    root = Path(release_root or os.environ.get("INTPATH_RELEASE_ROOT", "Data/v3/release")).resolve()
+    root = Path(release_root or os.environ.get("INTPATH_RELEASE_ROOT", "Data/intpathv2/release")).resolve()
     app = FastAPI(title="IntPath", version=__version__, description="Integrated pathways, PPIs, GO and enrichment")
 
     def available() -> list[str]:
@@ -113,7 +113,7 @@ def create_app(release_root: str | Path | None = None) -> FastAPI:
     def organisms():
         avail = set(available())
         return [
-            {"key": o.key, "name": o.name, "taxid": o.taxid, "available": o.key in avail, "legacy_v2": o.legacy_v2}
+            {"key": o.key, "name": o.name, "taxid": o.taxid, "available": o.key in avail, "in_old_intpath": o.in_old_intpath}
             for o in orglib.ORGANISMS.values()
         ]
 

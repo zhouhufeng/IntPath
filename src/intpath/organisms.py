@@ -1,7 +1,7 @@
-"""Organism registry: IntPath V3 is multi-organism, like V2.
+"""Organism registry: IntPathV2 is multi-organism, like old IntPath.
 
-V2 (2012) shipped H. sapiens, M. musculus, S. cerevisiae and M. tuberculosis
-H37Rv. V3 keeps those and adds the common model organisms. Every builder is
+Old IntPath (2012) shipped H. sapiens, M. musculus, S. cerevisiae and M. tuberculosis
+H37Rv. IntPathV2 keeps those and adds the common model organisms. Every builder is
 parameterised by an :class:`Organism`; adding a species means adding one entry
 here (or a YAML/JSON file loaded with :func:`load_custom`), not new code.
 
@@ -22,7 +22,7 @@ GO_GAF = "https://current.geneontology.org/annotations/{gaf}.gaf.gz"
 
 @dataclass(frozen=True)
 class Organism:
-    key: str  # short name used in paths/URLs, e.g. "sapiens" (V2 convention)
+    key: str  # short name used in paths/URLs, e.g. "sapiens" (old IntPath convention)
     name: str  # binomial
     taxid: str
     gene_info: str  # "<group>/<file stem>" under NCBI GENE_INFO
@@ -33,7 +33,7 @@ class Organism:
     go_gaf: str | None = None  # GO Consortium GAF stem
     biocyc: str | None = None  # BioCyc PGDB (subscription licence since 2017)
     hgnc: bool = False  # human: layer HGNC on top of NCBI gene_info
-    legacy_v2: bool = False
+    in_old_intpath: bool = False
     aliases: tuple[str, ...] = field(default=())
 
     @property
@@ -50,15 +50,15 @@ ORGANISMS: dict[str, Organism] = {
     o.key: o
     for o in [
         Organism("sapiens", "Homo sapiens", "9606", "Mammalia/Homo_sapiens", "hsa", "Homo sapiens", "Homo_sapiens",
-                 "9606", "goa_human", "HUMAN", hgnc=True, legacy_v2=True, aliases=("human", "hsa", "9606")),
+                 "9606", "goa_human", "HUMAN", hgnc=True, in_old_intpath=True, aliases=("human", "hsa", "9606")),
         Organism("musculus", "Mus musculus", "10090", "Mammalia/Mus_musculus", "mmu", "Mus musculus", "Mus_musculus",
-                 "10090", "mgi", "MOUSE", legacy_v2=True, aliases=("mouse", "mmu", "10090")),
+                 "10090", "mgi", "MOUSE", in_old_intpath=True, aliases=("mouse", "mmu", "10090")),
         Organism("cerevisiae", "Saccharomyces cerevisiae", "559292", "Fungi/Saccharomyces_cerevisiae", "sce",
-                 "Saccharomyces cerevisiae", "Saccharomyces_cerevisiae", "4932", "sgd", "YEAST", legacy_v2=True,
+                 "Saccharomyces cerevisiae", "Saccharomyces_cerevisiae", "4932", "sgd", "YEAST", in_old_intpath=True,
                  aliases=("yeast", "sce", "4932", "559292")),
         Organism("tuberculosis", "Mycobacterium tuberculosis H37Rv", "83332",
                  "Archaea_Bacteria/Mycobacterium_tuberculosis_H37Rv", "mtu", None, "Mycobacterium_tuberculosis",
-                 "83332", None, "MTBRV", legacy_v2=True, aliases=("mtb", "mtu", "83332", "1773")),
+                 "83332", None, "MTBRV", in_old_intpath=True, aliases=("mtb", "mtu", "83332", "1773")),
         Organism("norvegicus", "Rattus norvegicus", "10116", "Mammalia/Rattus_norvegicus", "rno", "Rattus norvegicus",
                  "Rattus_norvegicus", "10116", "rgd", "RAT", aliases=("rat", "rno", "10116")),
         Organism("rerio", "Danio rerio", "7955", "Non-mammalian_vertebrates/Danio_rerio", "dre", "Danio rerio",

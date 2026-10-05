@@ -13,7 +13,7 @@ $R "$SRC/src/" "$DST/src/"
 $R "$SRC/web/" "$DST/web/"
 $R "$SRC/tests/" "$DST/tests/"
 mkdir -p "$DST/docs" "$DST/legacy/java" "$DST/stats" "$DST/scripts"
-for f in METHODS.md DATA_FORMATS.md ROADMAP.md DEPLOY.md LEGACY_V2.md; do cp "$SRC/docs/$f" "$DST/docs/$f"; done
+for f in METHODS.md DATA_FORMATS.md ROADMAP.md DEPLOY.md OLD_INTPATH.md; do cp "$SRC/docs/$f" "$DST/docs/$f"; done
 $R "$SRC/Scripts/" "$DST/legacy/java/"
 # never publish database credentials from the legacy code
 find "$DST/legacy/java" -name '*.java' -exec sed -i -E 's/(user=)[^&"]*/\1INTPATH_DB_USER/; s/(password=)[^&"]*/\1INTPATH_DB_PASSWORD/' {} +
@@ -23,7 +23,7 @@ cp "$SRC/pyproject.toml" "$SRC/Dockerfile" "$SRC/.gitignore" "$DST/"
 cp "$SRC/scripts/sync_public.sh" "$DST/scripts/"
 
 # build summaries only (counts, no data rows)
-for s in "$SRC"/Data/v3/release/*/stats.json; do
+for s in "$SRC"/Data/intpathv2/release/*/stats.json; do
   [ -f "$s" ] || continue
   org=$(basename "$(dirname "$s")")
   python3 - "$s" "$DST/stats/${org}_stats.json" <<'PY'

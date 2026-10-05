@@ -58,15 +58,15 @@ def test_entity_guard(a, b, expected):
     assert numbered_entity_mismatch(a, b) is expected
 
 
-V2_ORGANISMS = ["sapiens", "musculus", "cerevisiae", "tuberculosis"]
+LEGACY_ORGANISMS = ["sapiens", "musculus", "cerevisiae", "tuberculosis"]
 
 
-@pytest.mark.parametrize("organism", V2_ORGANISMS)
-def test_reproduces_legacy_v2_release(organism):
-    """The port reproduces each V2 organism's related pathways and integrated pathway-gene table exactly."""
+@pytest.mark.parametrize("organism", LEGACY_ORGANISMS)
+def test_reproduces_old_intpath_release(organism):
+    """The port reproduces each old IntPath organism's related pathways and integrated pathway-gene table exactly."""
     root = DATA.parent / organism
     if not (root / "normalized").exists():
-        pytest.skip("V2 data not present")
+        pytest.skip("Old IntPath data not present")
     from intpath.io import read_legacy_source
     from intpath.unify import merge_pathways
 
@@ -92,7 +92,7 @@ def test_reproduces_legacy_v2_release(organism):
 
 def test_human_groups():
     if not (DATA / "normalized").exists():
-        pytest.skip("V2 data not present")
+        pytest.skip("Old IntPath data not present")
     from intpath.io import read_legacy_source
 
     n = DATA / "normalized"

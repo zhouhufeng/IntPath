@@ -1,4 +1,4 @@
-"""Gene identifier normalisation to official gene symbols (V3 of Normalize.java).
+"""Gene identifier normalisation to official gene symbols (IntPathV2 rewrite of Normalize.java).
 
 Works for any organism: the base layer is NCBI ``gene_info`` for the species
 (symbol, GeneID, locus tag, MOD/Ensembl cross-references, synonyms). Human adds

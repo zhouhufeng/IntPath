@@ -1,4 +1,4 @@
-"""Protein-protein interaction integration (V3).
+"""Protein-protein interaction integration (IntPathV2).
 
 Each source is parsed to (symbolA, symbolB, evidence) after HGNC normalisation;
 edges are undirected (sorted symbol pair) and fully unified across sources:

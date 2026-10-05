@@ -1,4 +1,4 @@
-# IntPath V3 release files
+# IntPathV2 release files
 
 All files are tab-delimited UTF-8 with a header row, one directory per organism
 (`release/<organism>/`).
@@ -11,10 +11,10 @@ All files are tab-delimited UTF-8 with a header row, one directory per organism
 | `intpath_set_members.tsv` | `set_id`, `source`, `source_pathway` (original pathway ID or name, or GO term ID) |
 | `intpath.gmt` | GMT export: `set_id`, `name`, genes… |
 | `intpath_ppi.tsv` | `gene_a`, `gene_b`, `sources`, `n_sources`, `n_pmids`, `methods`, `string_score`, `pathway_sets` |
-| `related_pathways.tsv` | the accepted name matches: `source_a`, `pathway_a`, `source_b`, `pathway_b`, `align_score`, `align_ratio`, `overlap_coef` |
+| `related_pathways.tsv` | the accepted name matches: `source_a`, `pathway_a`, `source_b`, `pathway_b`, `align_score`, `align_ratio`, `jaccard` |
 | `stats.json` | build date, per-source and integrated statistics, gene-mapping statistics |
 
-## Unified gene relationships (from V2, Table 1)
+## Unified gene relationships (from old IntPath, Table 1)
 
 | type | meaning | from |
 |---|---|---|
@@ -23,7 +23,7 @@ All files are tab-delimited UTF-8 with a header row, one directory per organism
 | GErel | gene expression interaction (TF → target) | KEGG GErel, GPML mim-transcription-translation |
 | GPrel | same complex or group, not necessarily direct | KEGG group entries, GPML groups, BioCyc IN_SAME_COMPONENT |
 
-## V2 legacy files (`Data/<organism>/integrated/IntPathData`)
+## Old IntPath legacy files (`Data/<organism>/integrated/IntPathData`)
 
 - `*IntPathGenes`: `pathway`, `gene`, `sources`
 - `*IntPathGenePairs`: `geneA`, `geneB`, `relation(s)`, `pathway`, `sources`

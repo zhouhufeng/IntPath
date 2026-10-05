@@ -6,13 +6,13 @@ import hashlib
 from dataclasses import dataclass, field
 
 # Unified gene-relationship vocabulary (Table 1 of the 2012 paper) plus the
-# relationship classes V3 adds when PPIs and complexes are merged in.
+# relationship classes IntPathV2 adds when PPIs and complexes are merged in.
 RELATIONS = {
     "ECrel": "enzyme-enzyme relation (successive reaction steps)",
     "PPrel": "protein-protein interaction (binding, modification, shared control)",
     "GErel": "gene expression interaction (transcription factor -> target)",
     "GPrel": "proteins in the same complex/group, not necessarily direct",
-    "PPI": "physical protein-protein interaction from an interaction database (V3)",
+    "PPI": "physical protein-protein interaction from an interaction database (IntPathV2)",
 }
 
 

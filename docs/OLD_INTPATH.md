@@ -1,6 +1,6 @@
-# IntPath V2: archived builds
+# Old IntPath: archived builds
 
-IntPath V2 covered four organisms. Every one is reproduced exactly by the V3 Python port in
+Old IntPath covered four organisms. Every one is reproduced exactly by the IntPathV2 Python port in
 legacy mode (see METHODS.md):
 
 | organism | KEGG / BioCyc / WikiPathways pathways | related name pairs | integrated pathways | genes | pathway-gene rows | gene pairs |
@@ -40,7 +40,7 @@ KEGG∩BioCyc 824 (0.13), WikiPathways∩BioCyc 396 (0.10). Gene pairs overlap m
 
 ## PPI
 
-STRING v9 human, combined score ≥ 750, mapped to IntPath symbols: 214,957 interactions. V2
+STRING v9 human, combined score ≥ 750, mapped to IntPath symbols: 214,957 interactions. Old IntPath
 used them for the "Analyze Distance" tool (Floyd-Warshall pathway distances).
 
 ## Code (`legacy/java/`)

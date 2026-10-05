@@ -44,15 +44,15 @@ def _write(rows: list[dict], path: str | None, limit: int | None = None) -> None
 
 
 def main(argv: list[str] | None = None) -> None:
-    ap = argparse.ArgumentParser(prog="intpath", description="IntPath V3 - integrated pathways, PPIs, GO and enrichment")
+    ap = argparse.ArgumentParser(prog="intpath", description="IntPathV2 - integrated pathways, PPIs, GO and enrichment")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("organisms", help="list supported organisms")
 
     b = sub.add_parser("build", help="download sources and build a release for an organism")
     b.add_argument("organism")
-    b.add_argument("--raw", default="Data/v3/raw")
-    b.add_argument("--out", default="Data/v3/release")
+    b.add_argument("--raw", default="Data/intpathv2/raw")
+    b.add_argument("--out", default="Data/intpathv2/release")
     b.add_argument("--sources", default="KEGG,Reactome,WikiPathways")
     b.add_argument("--biocyc-col", help="licensed BioCyc pathways.col file")
     b.add_argument("--ppi", action="append", default=[], metavar="LABEL:FORMAT:PATH",
@@ -63,15 +63,15 @@ def main(argv: list[str] | None = None) -> None:
     b.add_argument("--no-topology", action="store_true", help="skip KGML/GPML gene-pair extraction")
     b.add_argument("--public", action="store_true", help="exclude licence-restricted sources (KEGG, BioCyc)")
 
-    lg = sub.add_parser("legacy", help="re-run the 2012 merge on archived V2 normalized files")
+    lg = sub.add_parser("legacy", help="re-run the 2012 merge on archived old IntPath normalized files")
     lg.add_argument("--data", default="Data")
-    lg.add_argument("--out", default="Data/v3/release")
+    lg.add_argument("--out", default="Data/intpathv2/release")
     lg.add_argument("--organism", default="sapiens")
 
     for name, hlp in (("ora", "over-representation analysis"), ("pairs", "gene-pair (network) enrichment"),
                       ("gsea", "preranked GSEA")):
         p = sub.add_parser(name, help=hlp)
-        p.add_argument("release", help="release directory, e.g. Data/v3/release/sapiens")
+        p.add_argument("release", help="release directory, e.g. Data/intpathv2/release/sapiens")
         p.add_argument("input", help="gene list (ora/pairs) or 2-column ranking file (gsea); '-' for stdin")
         p.add_argument("--collections", help="comma list: pathway,GO:BP,GO:MF,GO:CC (default all)")
         p.add_argument("--out")
@@ -86,7 +86,7 @@ def main(argv: list[str] | None = None) -> None:
             p.add_argument("--seed", type=int, default=0)
 
     s = sub.add_parser("serve", help="run the web/API server")
-    s.add_argument("--release-root", default="Data/v3/release")
+    s.add_argument("--release-root", default="Data/intpathv2/release")
     s.add_argument("--host", default="127.0.0.1")
     s.add_argument("--port", type=int, default=8000)
 
@@ -94,7 +94,7 @@ def main(argv: list[str] | None = None) -> None:
 
     if a.cmd == "organisms":
         for o in organisms.ORGANISMS.values():
-            flag = " (V2)" if o.legacy_v2 else ""
+            flag = " (in old IntPath)" if o.in_old_intpath else ""
             print(f"{o.key:14s}{o.name:36s} taxid={o.taxid:7s} kegg={o.kegg or '-':4s} "
                   f"reactome={'y' if o.reactome else '-'} wp={'y' if o.wikipathways else '-'} go={o.go_gaf or '-'}{flag}")
         return

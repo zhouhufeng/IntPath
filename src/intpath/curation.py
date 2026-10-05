@@ -1,6 +1,6 @@
-"""Curated merge rules (from the V2 per-organism Integration.java files).
+"""Curated merge rules (from the old IntPath per-organism Integration.java files).
 
-V2 kept a hand-curated rule set per organism, written while reviewing each
+Old IntPath kept a hand-curated rule set per organism, written while reviewing each
 organism's merge results:
 
 * ``mismatches``  - pairs of name fragments that look alike but name different
@@ -9,9 +9,9 @@ organism's merge results:
                     compared case-insensitively when ``drop_case_insensitive``
 * ``replace``     - whole-token replacements in the integrated name (SpecialNameReplace)
 
-``rules_for(organism)`` returns the V2 rules for the four V2 organisms. New
-organisms, and every V3 build, use ``V3_RULES``: the union of all V2 mismatch
-lists plus the V3 additions in :mod:`intpath.names`. Add new curation here.
+``rules_for(organism)`` returns the old IntPath rules for the four old IntPath organisms. New
+organisms, and every IntPathV2 build, use ``INTPATHV2_RULES``: the union of all old IntPath mismatch
+lists plus the IntPathV2 additions in :mod:`intpath.names`. Add new curation here.
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ class Rules:
     replace: dict[str, str] = field(default_factory=dict)  # lower-case token -> replacement
 
 
-LEGACY_V2: dict[str, Rules] = {
+LEGACY_RULES: dict[str, Rules] = {
     "sapiens": Rules(
         mismatches=(
             ('NOD', 'Toll'),
@@ -156,23 +156,23 @@ LEGACY_V2: dict[str, Rules] = {
 
 def _union_mismatches() -> tuple[tuple[str, str], ...]:
     seen: dict[tuple[str, str], None] = {}
-    for rules in LEGACY_V2.values():
+    for rules in LEGACY_RULES.values():
         for p in rules.mismatches:
             seen.setdefault(p, None)
     return tuple(seen)
 
 
-ALL_V2_MISMATCHES = _union_mismatches()
-V3_RULES = Rules(
-    mismatches=ALL_V2_MISMATCHES,
-    drop_tokens=LEGACY_V2["sapiens"].drop_tokens,
+ALL_LEGACY_MISMATCHES = _union_mismatches()
+INTPATHV2_RULES = Rules(
+    mismatches=ALL_LEGACY_MISMATCHES,
+    drop_tokens=LEGACY_RULES["sapiens"].drop_tokens,
     replace={"glycolysis": "Glycolysis and Gluconeogenesis"},
 )
 
 
 def rules_for(organism: str | None, legacy: bool) -> Rules:
-    if legacy and organism in LEGACY_V2:
-        return LEGACY_V2[organism]
+    if legacy and organism in LEGACY_RULES:
+        return LEGACY_RULES[organism]
     if legacy:
-        return LEGACY_V2["sapiens"]
-    return V3_RULES
+        return LEGACY_RULES["sapiens"]
+    return INTPATHV2_RULES

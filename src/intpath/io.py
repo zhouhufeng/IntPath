@@ -1,4 +1,4 @@
-"""Readers and writers: legacy IntPath text files, GMT, and the V3 release tables."""
+"""Readers and writers: legacy IntPath text files, GMT, and the IntPathV2 release tables."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ def open_text(path: str | Path) -> io.TextIOBase:
 
 
 # --------------------------------------------------------------------------- #
-# Legacy (V2, 2012-2021) normalized files
+# Legacy (old IntPath, 2012-2021) normalized files
 #   *NormPthGEN : pathway \t gene \t source
 #   *NormPthGPR : geneA \t geneB \t relation \t pathway \t source
 # --------------------------------------------------------------------------- #
@@ -67,7 +67,7 @@ def write_gmt(sets: Iterable[GeneSet], path: str | Path) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# V3 release tables (tab-delimited, documented in docs/DATA_FORMATS.md)
+# IntPathV2 release tables (tab-delimited, documented in docs/DATA_FORMATS.md)
 # --------------------------------------------------------------------------- #
 def write_release(sets: list[GeneSet], outdir: str | Path, prefix: str = "intpath") -> dict[str, str]:
     out = Path(outdir)

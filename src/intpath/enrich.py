@@ -1,4 +1,4 @@
-"""IntPath V3 enrichment engine.
+"""IntPathV2 enrichment engine.
 
 Methods
 -------

@@ -1,4 +1,4 @@
-"""Gene Ontology integration (V3): GO terms as IntPath gene sets, merged the IntPath way.
+"""Gene Ontology integration (IntPathV2): GO terms as IntPath gene sets, merged the IntPath way.
 
 1. Parse the ontology (go-basic.obo) and the organism's GAF.
 2. Propagate annotations up is_a / part_of (true-path rule); NOT-qualified and

@@ -6,8 +6,8 @@ pip install -e '.[web]'
 for org in sapiens musculus cerevisiae tuberculosis; do intpath build $org; done
 
 # 2. run the service
-INTPATH_RELEASE_ROOT=Data/v3/release uvicorn web.app:app --host 0.0.0.0 --port 8000 --workers 2
-#   or: docker build -t intpath . && docker run -p 8000:8000 -v $PWD/Data/v3/release:/data intpath
+INTPATH_RELEASE_ROOT=Data/intpathv2/release uvicorn web.app:app --host 0.0.0.0 --port 8000 --workers 2
+#   or: docker build -t intpath . && docker run -p 8000:8000 -v $PWD/Data/intpathv2/release:/data intpath
 ```
 
 Put a reverse proxy in front for TLS, for example Caddy:

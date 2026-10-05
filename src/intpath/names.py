@@ -16,7 +16,7 @@ Method (Zhou et al., BMC Syst Biol 2012, 6(Suppl 2):S2):
   with roman-numeral style suffixes removed.
 
 ``legacy=True`` reproduces the 2012/2021 behaviour exactly on raw names.
-``legacy=False`` (the V3 default) cleans names first (HTML tags, species
+``legacy=False`` (the IntPathV2 default) cleans names first (HTML tags, species
 suffixes such as " - Homo sapiens (human)") and can require gene-set overlap as
 a second line of evidence (see :func:`find_related_pairs`).
 """
@@ -28,13 +28,13 @@ import re
 from dataclasses import dataclass, field
 from typing import Callable, Iterable, Sequence
 
-# Curated V2 rules live in intpath.curation (one set per V2 organism).
-from .curation import LEGACY_V2, Rules  # noqa: E402
+# Curated old IntPath rules live in intpath.curation (one set per old IntPath organism).
+from .curation import LEGACY_RULES, Rules  # noqa: E402
 
-LEGACY_MISMATCHES = LEGACY_V2["sapiens"].mismatches
+LEGACY_MISMATCHES = LEGACY_RULES["sapiens"].mismatches
 
-# Additional V3 guards, found while extending to Reactome/GO vocabularies.
-V3_MISMATCHES: tuple[tuple[str, str], ...] = (
+# Additional IntPathV2 guards, found while extending to Reactome/GO vocabularies.
+INTPATHV2_MISMATCHES: tuple[tuple[str, str], ...] = (
     ("VEGF", "EGF"),
     ("EGFR", "VEGFR"),
     ("Type I ", "Type II "),
@@ -146,7 +146,7 @@ def _entities(name: str) -> set[str]:
 
 
 def numbered_entity_mismatch(a: str, b: str) -> bool:
-    """V3 guard: the two names are about different molecular entities.
+    """IntPathV2 guard: the two names are about different molecular entities.
 
     "Signaling by FGFR1" vs "Signaling by FGFR2", "IL-1 signaling" vs "IL-17
     signaling", "RHOC GTPase cycle" vs "RHOG GTPase cycle": each name carries a
@@ -159,7 +159,7 @@ def numbered_entity_mismatch(a: str, b: str) -> bool:
 
 
 # --------------------------------------------------------------------------- #
-# Name cleaning (V3)
+# Name cleaning (IntPathV2)
 # --------------------------------------------------------------------------- #
 _TAG = re.compile(r"<[^>]+>")
 _SPECIES_SUFFIX = re.compile(r"\s+-\s+[A-Z][a-z]+ [a-z]+(\s+\([^)]*\))?\s*$")  # KEGG REST: " - Homo sapiens (human)"
@@ -175,7 +175,7 @@ def clean_name(name: str) -> str:
 
 def integrated_name(shortest: str, legacy: bool = True, rules: Rules | None = None) -> str:
     """Derive the integrated pathway name from the shortest member name (processIntPathNames)."""
-    rules = rules or LEGACY_V2["sapiens"]
+    rules = rules or LEGACY_RULES["sapiens"]
     drop = {t.lower() for t in rules.drop_tokens} if rules.drop_case_insensitive else rules.drop_tokens
     tokens = []
     for tok in shortest.split(" "):
@@ -231,7 +231,7 @@ def find_related_pairs(
 
     ``names`` maps a source label to its ordered list of pathway names.
     ``within_sources`` limits the within-source comparison (default: all).
-    ``entity_guard`` enables :func:`numbered_entity_mismatch` (V3).
+    ``entity_guard`` enables :func:`numbered_entity_mismatch` (IntPathV2).
     ``display`` optionally maps a raw name to the string that is aligned
     (e.g. :func:`clean_name`). If ``overlap`` is given, an accepted name match
     is kept only when ``overlap(a, b) >= min_overlap`` *or* the names are
@@ -285,10 +285,10 @@ def java_string_hash(s: str) -> int:
 def java_hashmap_order(keys_in_insertion_order: Sequence[str]) -> list[str]:
     """Iteration order of a JDK <= 7 java.util.HashMap<String, ?> holding these keys.
 
-    V2 picked integrated pathway names from HashMap iteration order when two
+    Old IntPath picked integrated pathway names from HashMap iteration order when two
     candidate names had equal length; emulating it makes the legacy rebuild
-    reproduce V2 labels. The JDK 7 supplemental hash matches the member order
-    printed in the V2 RelPthNamsGEN files (human 57/57 groups, M. tuberculosis
+    reproduce old IntPath labels. The JDK 7 supplemental hash matches the member order
+    printed in the old IntPath RelPthNamsGEN files (human 57/57 groups, M. tuberculosis
     35/35, yeast 76/76, mouse 84/85); the JDK 8 hash does not.
     Order = bucket index, then insertion order.
     """
@@ -345,7 +345,7 @@ def group_related(
     """Union-find over accepted matches; name each component by its shortest member.
 
     ``merge_same_name`` joins components that end up with the same integrated
-    name (V2 mouse behaviour); otherwise they stay separate sets.
+    name (old IntPath mouse behaviour); otherwise they stay separate sets.
     """
     show = display or (lambda s: s)
     matches = list(matches)
@@ -353,7 +353,7 @@ def group_related(
     for m in matches:
         ds.union(m.a, m.b)
     java_rank: dict = {}
-    if legacy:  # V2 node strings were "<name>+<K|C|W>" keys of a HashMap
+    if legacy:  # Old IntPath node strings were "<name>+<K|C|W>" keys of a HashMap
         node = lambda k: f"{k[1]}+{k[0]}"  # noqa: E731
         order = java_hashmap_order([node(k) for m in matches for k in (m.a, m.b)])
         java_rank = {n: i for i, n in enumerate(order)}

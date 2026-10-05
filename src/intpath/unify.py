@@ -10,9 +10,9 @@ from __future__ import annotations
 from typing import Callable, Iterable
 
 from .model import GeneSet, SourcePathway, stable_id
-from .curation import LEGACY_V2, rules_for
+from .curation import LEGACY_RULES, rules_for
 from .names import (
-    V3_MISMATCHES,
+    INTPATHV2_MISMATCHES,
     Match,
     PathwayGroup,
     clean_name,
@@ -50,7 +50,7 @@ def merge_pathways(
 ) -> tuple[list[GeneSet], list[Match]]:
     """Group related pathways by name and fully unify their genes and gene pairs.
 
-    legacy=True  -> exact V2 rule set of ``organism`` (intpath.curation) on raw
+    legacy=True  -> exact old IntPath rule set of ``organism`` (intpath.curation) on raw
                     names, no gene-overlap guard.
     legacy=False -> names cleaned; extended mismatch list; entity guard; no
                     within-source matching for hierarchical sources (Reactome);
@@ -77,7 +77,7 @@ def merge_pathways(
     overlap = None
     within = None
     if not legacy:
-        mismatches += V3_MISMATCHES
+        mismatches += INTPATHV2_MISMATCHES
         display = clean_name
         overlap = lambda a, b: jaccard(by_key[a].genes, by_key[b].genes)  # noqa: E731
         within = [s for s in names if s not in set(no_within)]
@@ -118,4 +118,4 @@ def unify_group(group: PathwayGroup, by_key: dict[tuple[str, str], SourcePathway
     return gs
 
 
-__all__ = ["merge_pathways", "unify_group", "overlap_coefficient", "jaccard", "integrated_name", "LEGACY_V2"]
+__all__ = ["merge_pathways", "unify_group", "overlap_coefficient", "jaccard", "integrated_name", "LEGACY_RULES"]
