@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IntPath</title>
+<meta name="description" content="IntPath: integrated pathways, PPIs and Gene Ontology with network-aware gene set enrichment for many organisms.">
+<style>
+:root {
+  --bg: #fbfbf9; --panel: #ffffff; --ink: #1d232a; --muted: #5f6b76; --line: #e3e5e8;
+  --accent: #1f6f8b; --accent-ink: #ffffff; --chip: #eef4f6; --warn: #9a5b00; --good: #2c7a4b;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161a; --panel: #1a2026; --ink: #e6e9ec; --muted: #9aa5b1; --line: #2b333b;
+    --accent: #5fb3cf; --accent-ink: #0d1a20; --chip: #1f2b33; --warn: #e0a24a; --good: #6cc592;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161a; --panel: #1a2026; --ink: #e6e9ec; --muted: #9aa5b1; --line: #2b333b;
+  --accent: #5fb3cf; --accent-ink: #0d1a20; --chip: #1f2b33; --warn: #e0a24a; --good: #6cc592;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { border-bottom: 1px solid var(--line); background: var(--panel); }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+.top { display: flex; align-items: center; gap: 16px; padding: 14px 0; flex-wrap: wrap; }
+.brand { font-weight: 700; font-size: 20px; letter-spacing: .2px; }
+.brand span { color: var(--accent); }
+.tag { color: var(--muted); font-size: 13px; }
+nav { display: flex; gap: 4px; margin-left: auto; }
+nav button { background: none; border: 0; color: var(--muted); padding: 8px 12px; border-radius: 6px; cursor: pointer; font: inherit; }
+nav button.on { color: var(--ink); background: var(--chip); }
+main { padding: 20px 0 48px; }
+.grid { display: grid; grid-template-columns: 340px 1fr; gap: 20px; }
+@media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+select, textarea, input { width: 100%; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 8px; font: inherit; }
+textarea { min-height: 180px; font-family: var(--mono); font-size: 13px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.seg button { flex: 1; border: 1px solid var(--line); background: var(--bg); color: var(--ink); padding: 7px; border-radius: 6px; cursor: pointer; font: inherit; font-size: 13px; }
+.seg button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.checks label { display: inline-flex; gap: 6px; align-items: center; margin-right: 12px; color: var(--ink); }
+.checks input { width: auto; }
+.go { margin-top: 14px; width: 100%; background: var(--accent); color: var(--accent-ink); border: 0; padding: 10px; border-radius: 6px; font: inherit; font-weight: 600; cursor: pointer; }
+.hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
+.status { color: var(--muted); font-size: 13px; margin-bottom: 10px; min-height: 20px; }
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chip { display: inline-block; background: var(--chip); border-radius: 4px; padding: 0 6px; margin: 1px 2px 1px 0; font-size: 12px; }
+.theme { color: var(--muted); font-size: 12px; }
+.genes { font-family: var(--mono); font-size: 12px; color: var(--muted); max-width: 360px; }
+a { color: var(--accent); cursor: pointer; text-decoration: none; }
+.hidden { display: none; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.stat b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+.stat span { color: var(--muted); font-size: 12px; }
+footer { color: var(--muted); font-size: 12px; padding: 24px 0; border-top: 1px solid var(--line); }
+</style>
+</head>
+<body>
+<header><div class="wrap top">
+  <div><div class="brand">Int<span>Path</span></div><div class="tag">Integrated pathways · PPIs · Gene Ontology · enrichment</div></div>
+  <nav><button data-tab="enrich" class="on">Enrichment</button><button data-tab="browse">Browse</button><button data-tab="about">Data &amp; methods</button></nav>
+</div></header>
+
+<main class="wrap">
+  <section id="tab-enrich" class="grid">
+    <div class="card">
+      <label for="org">Organism</label>
+      <select id="org"></select>
+      <label>Analysis</label>
+      <div class="row seg" id="mode">
+        <button data-m="ora" class="on">Gene list</button><button data-m="pairs">Gene pairs</button><button data-m="gsea">Ranked (GSEA)</button>
+      </div>
+      <label for="input" id="inputLabel">Genes (symbols or IDs, any separator)</label>
+      <textarea id="input" spellcheck="false" placeholder="TP53 MDM2 CDKN1A BAX ..."></textarea>
+      <div class="hint" id="inputHint">Example: <a id="example">load an example</a></div>
+      <label>Libraries</label>
+      <div class="checks" id="cols">
+        <label><input type="checkbox" value="pathway" checked>Pathways</label>
+        <label><input type="checkbox" value="GO:BP" checked>GO BP</label>
+        <label><input type="checkbox" value="GO:MF">GO MF</label>
+        <label><input type="checkbox" value="GO:CC">GO CC</label>
+      </div>
+      <div class="checks" id="ppiBox" style="display:none"><label><input type="checkbox" id="withPPI" checked>Add merged PPI edges inside pathways</label></div>
+      <button class="go" id="run">Run analysis</button>
+    </div>
+    <div class="card">
+      <div class="status" id="status">Paste genes and run. Results are grouped into themes so redundant pathways/GO terms show once.</div>
+      <div class="tablewrap"><table id="results"></table></div>
+    </div>
+  </section>
+
+  <section id="tab-browse" class="hidden">
+    <div class="card">
+      <div class="row"><input id="q" placeholder="Search a pathway, GO term or gene (e.g. apoptosis, TP53)" style="flex:1"><button class="go" style="width:auto;margin:0" id="search">Search</button></div>
+      <div class="tablewrap" style="margin-top:12px"><table id="browse"></table></div>
+      <div id="detail" style="margin-top:16px"></div>
+    </div>
+  </section>
+
+  <section id="tab-about" class="hidden">
+    <div class="card">
+      <div class="stats" id="stats"></div>
+      <h3>How IntPath integrates</h3>
+      <p>Pathways from KEGG, Reactome, WikiPathways (and BioCyc where licensed) are normalised to official gene symbols. Related pathways are found by case-insensitive longest-common-subsequence alignment of their names (accepted when the shorter name aligns almost completely with ratio ≥ 0.5, or ratio &gt; 0.91), guarded by curated mismatch lists and, in V3, shared genes. Related pathways are grouped with a disjoint set and <em>fully unified</em>: every gene and gene pair is kept, with the source databases that support it.</p>
+      <p>GO annotations are propagated up the ontology; terms with identical gene sets on one lineage are merged without loss and linked to equivalent pathways. PPIs from STRING, BioGRID and IntAct are merged per gene pair with their evidence, and marked when the pair is also a curated pathway relation.</p>
+      <h3>Enrichment</h3>
+      <p><b>Gene list</b>: hypergeometric test with BH-FDR, plus <em>consensus</em>, the share of hit genes that ≥ 2 source databases place in the pathway. <b>Gene pairs</b>: tests whether curated relations among your genes concentrate in a pathway's wiring. <b>Ranked</b>: preranked GSEA with size-matched permutation nulls (NES, nominal p, FDR).</p>
+      <p>Citation: Zhou H, Jin J, Zhang H, Yi B, Wozniak M, Wong L. IntPath: an integrated pathway gene relationship database for model organisms and important pathogens. <i>BMC Systems Biology</i> 2012, 6(Suppl 2):S2.</p>
+    </div>
+  </section>
+</main>
+<footer class="wrap">IntPath V3 · <a href="/docs">API</a> · source code: github.com/zhouhufeng/IntPath</footer>
+
+<script>
+const $ = s => document.querySelector(s);
+let mode = "ora";
+const examples = {
+  ora: "TP53 MDM2 CDKN1A BAX BBC3 PMAIP1 GADD45A SESN1 SESN2 RRM2B TP53I3 FAS TNFRSF10B ZMAT3 DDB2 XPC POLH RPS27L TRIAP1 AEN",
+  gsea: "Gene\tscore\n" + "MYC 3.1\nE2F1 2.9\nCCNB1 2.8\nCDK1 2.7\nMKI67 2.6\nTOP2A 2.5\nPCNA 2.4\nMCM2 2.3\nCCNA2 2.2\nBUB1 2.1".replace(/ /g, "\t"),
+};
+examples.pairs = examples.ora;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = x => x == null ? "" : (x < 1e-3 ? x.toExponential(1) : (+x).toPrecision(2));
+
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
+  ["enrich", "browse", "about"].forEach(t => $("#tab-" + t).classList.toggle("hidden", t !== b.dataset.tab));
+  if (b.dataset.tab === "about") loadStats();
+});
+document.querySelectorAll("#mode button").forEach(b => b.onclick = () => {
+  mode = b.dataset.m;
+  document.querySelectorAll("#mode button").forEach(x => x.classList.toggle("on", x === b));
+  $("#inputLabel").textContent = mode === "gsea" ? "Ranked genes: gene <tab> score per line (e.g. log2FC or signed -log10 p)" : "Genes (symbols or IDs, any separator)";
+  $("#ppiBox").style.display = mode === "pairs" ? "" : "none";
+});
+$("#example").onclick = () => { $("#input").value = examples[mode]; };
+
+async function loadOrganisms() {
+  const r = await fetch("/api/organisms").then(r => r.json());
+  $("#org").innerHTML = r.map(o => `<option value="${o.key}" ${o.available ? "" : "disabled"}>${esc(o.name)}${o.available ? "" : " (not built)"}</option>`).join("");
+  const first = r.find(o => o.available); if (first) $("#org").value = first.key;
+}
+const org = () => $("#org").value;
+const cols = () => [...document.querySelectorAll("#cols input:checked")].map(i => i.value);
+
+$("#run").onclick = async () => {
+  const text = $("#input").value.trim();
+  if (!text) return;
+  $("#status").textContent = "Running…";
+  let body, url = `/api/${org()}/enrich/${mode}`;
+  if (mode === "gsea") {
+    const ranking = {};
+    text.split(/\n/).forEach(l => { const f = l.split(/[\t,; ]+/); const v = parseFloat(f[1]); if (f[0] && !isNaN(v)) ranking[f[0]] = v; });
+    body = {ranking, collections: cols()};
+  } else {
+    body = {genes: text.split(/[\s,;]+/).filter(Boolean), collections: mode === "pairs" ? ["pathway"] : cols(), with_ppi: $("#withPPI").checked};
+  }
+  const res = await fetch(url, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+  if (!res.ok) { $("#status").textContent = "Error: " + (await res.text()); return; }
+  const r = await res.json();
+  $("#status").textContent = `${r.n_mapped} of ${r.n_input} genes recognised · ${r.results.length} sets tested` + (r.unmapped && r.unmapped.length ? ` · unrecognised: ${r.unmapped.slice(0, 8).join(", ")}${r.unmapped.length > 8 ? "…" : ""}` : "");
+  render(r.results);
+};
+
+function render(rows) {
+  const t = $("#results");
+  if (!rows.length) { t.innerHTML = "<tr><td>No sets with overlap.</td></tr>"; return; }
+  if (mode === "gsea") {
+    t.innerHTML = "<tr><th>Set</th><th>Size</th><th>NES</th><th>p</th><th>FDR</th><th>Leading edge</th></tr>" + rows.slice(0, 200).map(r =>
+      `<tr><td>${link(r)}${theme(r)}</td><td class="num">${r.set_size}</td><td class="num">${r.nes.toFixed(2)}</td><td class="num">${fmt(r.p)}</td><td class="num">${fmt(r.fdr)}</td><td class="genes">${esc(r.leading_edge.slice(0, 15).join(" "))}</td></tr>`).join("");
+  } else if (mode === "pairs") {
+    t.innerHTML = "<tr><th>Pathway</th><th>Pairs hit</th><th>Expected</th><th>p</th><th>FDR</th><th>Relations</th></tr>" + rows.slice(0, 200).map(r =>
+      `<tr><td>${link(r)}</td><td class="num">${r.overlap_pairs}/${r.set_pairs}</td><td class="num">${r.expected}</td><td class="num">${fmt(r.p)}</td><td class="num">${fmt(r.fdr)}</td><td class="genes">${esc(r.pairs.slice(0, 10).join(" "))}</td></tr>`).join("");
+  } else {
+    t.innerHTML = "<tr><th>Set</th><th>Overlap</th><th>Fold</th><th>p</th><th>FDR</th><th>Consensus</th><th>Genes</th></tr>" + rows.slice(0, 200).map(r =>
+      `<tr><td>${link(r)}${theme(r)}</td><td class="num">${r.overlap}/${r.set_size}</td><td class="num">${r.fold}</td><td class="num">${fmt(r.p)}</td><td class="num">${fmt(r.fdr)}</td><td class="num">${r.consensus == null ? "" : Math.round(100 * r.consensus) + "%"}</td><td class="genes">${esc(r.genes.join(" "))}</td></tr>`).join("");
+  }
+}
+const theme = r => r.theme ? `<div class="theme">theme ${r.theme}${r.theme_leader !== r.name ? " · with " + esc(r.theme_leader) : ""}</div>` : "";
+const link = r => `<a onclick="showSet('${esc(r.id)}')">${esc(r.name)}</a><div>${(r.sources || "").split(",").filter(Boolean).map(s => `<span class="chip">${esc(s)}</span>`).join("")}<span class="chip">${esc(r.collection)}</span></div>`;
+
+$("#search").onclick = async () => {
+  const r = await fetch(`/api/${org()}/search?q=${encodeURIComponent($("#q").value)}`).then(r => r.json());
+  $("#browse").innerHTML = "<tr><th>Name</th><th>Library</th><th>Sources</th><th>Genes</th></tr>" + r.map(s =>
+    `<tr><td><a onclick="showSet('${esc(s.id)}')">${esc(s.name)}</a></td><td>${esc(s.collection)}</td><td>${s.sources.map(x => `<span class="chip">${esc(x)}</span>`).join("")}</td><td class="num">${s.n_genes}</td></tr>`).join("");
+};
+$("#q").onkeydown = e => { if (e.key === "Enter") $("#search").click(); };
+
+async function showSet(id) {
+  document.querySelector('nav button[data-tab="browse"]').click();
+  const s = await fetch(`/api/${org()}/set/${encodeURIComponent(id)}`).then(r => r.json());
+  const genes = Object.entries(s.genes);
+  $("#detail").innerHTML = `<h3>${esc(s.name)} <span class="chip">${esc(s.id)}</span></h3>
+    <p><b>Merged from:</b> ${s.members.map(m => `<span class="chip">${esc(m.source)}: ${esc(m.pathway)}</span>`).join(" ")}</p>
+    ${s.links.length ? `<p><b>Related:</b> ${s.links.map(l => `<a onclick="showSet('${esc(l.id)}')">${esc(l.name)}</a> <span class="chip">${esc(l.collection)}</span>`).join(" · ")}</p>` : ""}
+    <p><b>${genes.length} genes</b> (sources supporting each membership)</p>
+    <div class="genes" style="max-width:none">${genes.map(([g, src]) => `${esc(g)}<sup>${src.length}</sup>`).join(" ")}</div>
+    <p><b>${s.pairs.length} gene pairs</b></p>
+    <div class="tablewrap"><table><tr><th>Gene A</th><th>Gene B</th><th>Relation</th><th>Sources</th></tr>${s.pairs.slice(0, 300).map(p => `<tr><td>${esc(p.a)}</td><td>${esc(p.b)}</td><td>${p.relations.join(", ")}</td><td>${p.sources.join(", ")}</td></tr>`).join("")}</table></div>`;
+}
+
+async function loadStats() {
+  const s = await fetch(`/api/${org()}/stats`).then(r => r.ok ? r.json() : null);
+  if (!s) { $("#stats").innerHTML = ""; return; }
+  const items = [["Integrated pathways", s.pathways?.sets], ["Merged from ≥2 pathways", s.pathways?.merged_sets], ["Pathway genes", s.pathways?.genes], ["Pathway gene pairs", s.pathways?.gene_pairs], ["GO gene sets", s.go?.go_sets], ["PPI edges", s.ppi?.edges]];
+  $("#stats").innerHTML = items.filter(i => i[1] != null).map(([k, v]) => `<div class="stat"><b>${(+v).toLocaleString()}</b><span>${k} · ${esc(s.organism)}</span></div>`).join("");
+}
+loadOrganisms();
+</script>
+</body>
+</html>

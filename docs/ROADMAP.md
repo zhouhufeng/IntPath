@@ -1,0 +1,60 @@
+# IntPath V3 roadmap (intpath.genohub.org)
+
+## Done in this repository
+- [x] Python port of the V2 merge method (`intpath.names`, `intpath.unify`), validated to
+      reproduce the V2 human release exactly (`tests/test_names.py`, `intpath legacy`)
+- [x] Multi-organism registry with 10 organisms, including the 4 V2 organisms
+      (`intpath.organisms`)
+- [x] Gene ID mapping for any organism (NCBI gene_info, plus HGNC and UniProt layers)
+- [x] Source extractors: KEGG REST+KGML (gene pairs), Reactome, WikiPathways GMT+GPML
+      (gene pairs), BioCyc `pathways.col` (licensed)
+- [x] PPI integration: STRING, BioGRID, PSI-MITAB, TSV; evidence-preserving union;
+      pathway overlay
+- [x] GO integration: propagation, lossless redundancy merge, GO↔pathway cross-links
+- [x] Enrichment: ORA with source consensus, gene-pair/network enrichment, preranked GSEA,
+      redundancy-aware themes
+- [x] Release format (TSV + GMT + stats.json), CLI, FastAPI service with a single-page UI
+- [x] Public-repo sync script (`scripts/sync_public.sh`)
+- [x] First V3 human build (2026-10-05): KEGG 372 + Reactome 2,835 + WikiPathways 991 pathways
+      → 4,003 integrated sets (130 merged from 315 source pathways), 14,849 genes,
+      173,645 gene pairs; 10,721 GO sets (1,020 GO↔pathway links); 85,998 STRING physical
+      edges (score ≥ 700), 23,175 of them also curated pathway relations
+      (`Data/v3/release/sapiens/stats.json`)
+
+## Known gaps in the first build
+- Reactome contributes membership only. Its gene pairs need the Reactome interaction export
+  (`reactome.homo_sapiens.interactions.tab-delimited.txt`), mapped to relations by reaction
+  type.
+- The PPI layer is STRING only. The BioGRID and PSI-MITAB (IntAct, HuRI) parsers are ready;
+  add their files with `--ppi BioGRID:biogrid:<file>`, or add automatic downloads.
+- *M. tuberculosis* has no GO Consortium GAF. Use the UniProt GOA proteome file.
+- The V3 merge guards (Jaccard ≥ 0.1, entity guard, no Reactome-internal merging) were tuned
+  on the human build. Review `related_pathways.tsv` by hand for each new organism.
+
+## Next
+1. **Builds for all registry organisms.** Run `intpath build <org>` for each organism, then
+   review `related_pathways.tsv` by hand. V2 also needed moderate manual curation; record new
+   cases in the mismatch lists.
+2. **Curation file.** Move the mismatch lists and manual merge/split decisions into a versioned
+   `curation/<organism>.tsv` that the builder reads.
+3. **Licensing.** KEGG- and BioCyc-derived files can't be redistributed without a licence.
+   Either get a KEGG FTP/redistribution licence, or serve KEGG-derived content only through
+   the web analysis and publish the downloadable release from the `--public` build
+   (Reactome + WikiPathways + GO + PPIs).
+4. **More sources.** Pathway Commons / PathBank / PANTHER pathways, MSigDB Hallmarks as a
+   reference collection, CORUM complexes (GPrel), SIGNOR causal relations (directed PPrel/GErel).
+5. **Analyze Distance (V2 tool).** Shortest-path distances between pathways on the merged PPI
+   network, plus network propagation (random walk with restart) from the query genes.
+6. **Topology-aware enrichment.** Weight pathway genes by betweenness in the unified gene-pair
+   graph (SPIA/ROntoTools-like) and compare the results with the plain pair test.
+7. **Ortholog projection** for organisms without curated pathways (e.g. Reactome-inferred,
+   or orthologs via NCBI gene_orthologs), with every projected membership labelled with its
+   source.
+8. **Web.** Interactive pathway graph (Cytoscape.js), downloadable result tables, job queue
+   for large GSEA runs, result permalinks, and an API key or rate limit for the public server.
+9. **Benchmark.** Compare against single-source libraries, MSigDB C2/C5 and Enrichr libraries
+   on GEO/KEGG disease benchmark sets (e.g. GSEABenchmarkeR), measuring sensitivity,
+   prioritisation and redundancy. Results go into the V3 manuscript.
+10. **Release cadence.** Quarterly automated builds, with the date and source versions recorded
+    in `stats.json`, and a changelog of added, removed and re-grouped pathways keyed by stable
+    ID.

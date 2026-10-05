@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "intpath"
+version = "3.0.0.dev0"
+description = "IntPath V3: integrated pathways, PPIs and GO with network-aware gene set enrichment, for many organisms"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Hufeng Zhou", email = "zhouhufeng@gmail.com" }]
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+web = ["fastapi>=0.110", "uvicorn>=0.27", "python-multipart"]
+test = ["pytest>=7", "scipy>=1.10", "httpx"]
+
+[project.scripts]
+intpath = "intpath.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src", "."]
+include = ["intpath*", "web*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]

@@ -1,0 +1,76 @@
+{
+  "organism": "Homo sapiens",
+  "taxid": "9606",
+  "built": "2026-10-05",
+  "sources": {
+    "KEGG": {
+      "pathways": 372,
+      "genes": 9436,
+      "gene_pairs": 82326,
+      "mean_genes_per_pathway": 106.6,
+      "mean_pairs_per_pathway": 357.97
+    },
+    "Reactome": {
+      "pathways": 2835,
+      "genes": 11363,
+      "gene_pairs": 0,
+      "mean_genes_per_pathway": 49.25,
+      "mean_pairs_per_pathway": 0.0
+    },
+    "WikiPathways": {
+      "pathways": 991,
+      "genes": 9030,
+      "gene_pairs": 109500,
+      "mean_genes_per_pathway": 40.65,
+      "mean_pairs_per_pathway": 175.67
+    }
+  },
+  "pathways": {
+    "sets": 4003,
+    "merged_sets": 130,
+    "member_pathways_in_merged_sets": 315,
+    "genes": 14849,
+    "gene_pairs": 173645,
+    "mean_genes_per_set": 52.43,
+    "mean_pairs_per_set": 72.01
+  },
+  "related_pathway_pairs": 200,
+  "go": {
+    "annotated_terms_propagated": 20956,
+    "go_sets": 10721,
+    "go_terms_in_sets": 11308,
+    "by_namespace": {
+      "GO:BP": 7484,
+      "GO:MF": 2060,
+      "GO:CC": 1177
+    },
+    "pathway_links": 1020
+  },
+  "ppi": {
+    "per_source": {
+      "STRING": {
+        "rows": 173038,
+        "mapped_rows": 172146,
+        "unmapped_ids": 48
+      }
+    },
+    "edges": 85998,
+    "genes": 10673,
+    "edges_per_source": {
+      "STRING": 85998
+    },
+    "edges_by_n_sources": {
+      "1": 85998
+    },
+    "pathway_supported_edges": 23175
+  },
+  "aliases": 214056,
+  "mapping": {
+    "exact": 1129620,
+    "unmapped": 96546,
+    "alias": 1126,
+    "previous": 1482,
+    "ambiguous_alias": 204,
+    "ambiguous_previous": 2
+  }
+}
