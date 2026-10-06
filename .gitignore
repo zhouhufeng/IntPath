@@ -27,3 +27,4 @@ Data/intpathv2/db/*/intpath.gmt
 Data/intpathv2/db/*/intpath.sqlite*
 Data/intpathv2/db/*/kgml/
 Data/intpathv2/db/*/build.log
+Deploy/.env.prod

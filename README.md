@@ -5,6 +5,11 @@ important pathogens. It also provides gene set enrichment analysis on the integr
 This repository holds the public scripts, documentation and summary statistics of **IntPathV2**,
 which is in development. It also keeps the IntPath v1 code for reference.
 
+**Website: https://intpath.genohub.org.** Sign in with a
+[Genohub Community](https://discussion.genohub.org) account. Access is approved: request
+membership of the [IntPath Users](https://discussion.genohub.org/g/intpath) group, and use the
+[IntPath category](https://discussion.genohub.org/c/intpath) for questions and feedback.
+
 There are two versions:
 
 - **IntPath v1**: the database and methods published in 2012, covering human, mouse, yeast and
