@@ -195,11 +195,12 @@ def create_app(release_root: str | Path | None = None, *, licensed: bool = False
         L = lib(org)
         limit = min(max(limit, 1), 200)
         rows = query(org, "SELECT set_id AS id, name, collection, sources, n_genes FROM gset "
-                          "WHERE name LIKE ? OR set_id = ? ORDER BY "
+                          "WHERE name LIKE ? OR set_id = ? "
+                          "OR set_id IN (SELECT set_id FROM set_member WHERE name LIKE ?) ORDER BY "
                           "CASE WHEN lower(name) = lower(?) THEN 0 ELSE 1 END, "
                           "CASE WHEN collection = 'pathway' THEN 0 WHEN collection LIKE 'GO:%' THEN 1 "
                           "WHEN collection = 'msigdb:H' THEN 2 ELSE 3 END, length(name) LIMIT ?",
-                     (f"%{term}%", term, term, limit))
+                     (f"%{term}%", term, f"%{term}%", term, limit))
         gene = L.aliases.get(term.upper())
         if gene:
             seen = {r["id"] for r in rows}
