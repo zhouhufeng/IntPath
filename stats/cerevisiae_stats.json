@@ -1,97 +1,14 @@
 {
   "organism": "Saccharomyces cerevisiae",
   "taxid": "559292",
-  "built": "2026-10-05",
-  "sources": {
-    "Reactome": {
-      "pathways": 847,
-      "genes": 1626,
-      "gene_pairs": 0,
-      "mean_genes_per_pathway": 16.43,
-      "mean_pairs_per_pathway": 0.0
-    },
-    "WikiPathways": {
-      "pathways": 101,
-      "genes": 895,
-      "gene_pairs": 884,
-      "mean_genes_per_pathway": 13.14,
-      "mean_pairs_per_pathway": 10.89
-    }
-  },
-  "pathways": {
-    "sets": 932,
-    "merged_sets": 14,
-    "member_pathways_in_merged_sets": 29,
-    "genes": 2020,
-    "gene_pairs": 884,
-    "mean_genes_per_set": 16.19,
-    "mean_pairs_per_set": 1.16
-  },
-  "related_pathway_pairs": 19,
-  "go": {
-    "annotated_terms_propagated": 8117,
-    "go_sets": 3451,
-    "go_terms_in_sets": 3924,
-    "by_namespace": {
-      "GO:BP": 2138,
-      "GO:MF": 778,
-      "GO:CC": 535
-    },
-    "pathway_links": 485
-  },
-  "ppi": {
-    "per_source": {
-      "STRING": {
-        "rows": 86060,
-        "mapped_rows": 86052,
-        "unmapped_ids": 2
-      },
-      "BioGRID": {
-        "rows": 283038,
-        "mapped_rows": 278950,
-        "unmapped_ids": 7
-      },
-      "IntAct": {
-        "rows": 167234,
-        "mapped_rows": 161008,
-        "unmapped_ids": 434
-      }
-    },
-    "edges": 255029,
-    "edges_by_tier": {
-      "high": 78064,
-      "medium": 176965
-    },
-    "genes": 6145,
-    "edges_per_source": {
-      "BioGRID": 193000,
-      "STRING": 43026,
-      "IntAct": 87890,
-      "MINT": 17928
-    },
-    "edges_by_n_sources": {
-      "1": 189498,
-      "2": 48107,
-      "3": 13564,
-      "4": 3860
-    },
-    "pathway_supported_edges": 456
-  },
-  "tier": "open",
-  "versions": {
-    "STRING": "12.0",
-    "Reactome": "97",
-    "WikiPathways": "20260910",
-    "GO": "releases/2026-07-26",
-    "BioGRID": "5.0.262",
-    "IntAct/MINT": "downloaded 2026-10-05",
-    "HuRI": "downloaded 2026-10-05",
-    "NCBI Gene": "downloaded 2026-10-05"
-  },
-  "aliases": 63348,
-  "mapping": {
-    "exact": 164368,
-    "unmapped": 6416,
-    "alias": 11
-  }
+  "built": "2026-10-06",
+  "source_pathways": 1090,
+  "related_pathway_pairs": 74,
+  "integrated_pathways": 1024,
+  "merged_pathways": 53,
+  "source_pathways_in_merged": 118,
+  "genes": 3199,
+  "gene_pairs": 5510,
+  "physical_ppi_edges": 236630,
+  "go_sets": 3451
 }

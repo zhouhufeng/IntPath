@@ -9,7 +9,7 @@ There are two versions:
 
 - **IntPath v1**: the database and methods published in 2012, covering human, mouse, yeast and
   *M. tuberculosis*. Everything described in the paper below refers to this version. Its Java
-  code is in `legacy/java/`, and [Docs/OLD_INTPATH.md](Docs/OLD_INTPATH.md) summarises it.
+  code is in `legacy/java/`, and [Docs/INTPATH_V1.md](Docs/INTPATH_V1.md) summarises it.
 - **IntPathV2**: the new version, in development. It is the Python package, web service and
   documentation in this repository.
 
@@ -44,7 +44,7 @@ IntPathV2 keeps this method and extends it:
 
 The Python port reproduces the IntPath v1 database exactly for all four of its organisms: every
 related pathway pair, integrated pathway name and pathway-gene row. See
-[Docs/METHODS.md](Docs/METHODS.md) and [Docs/OLD_INTPATH.md](Docs/OLD_INTPATH.md).
+[Docs/METHODS.md](Docs/METHODS.md) and [Docs/INTPATH_V1.md](Docs/INTPATH_V1.md).
 
 ## IntPath in numbers: v1 vs V2
 
@@ -104,9 +104,9 @@ src/intpath/   names.py (name alignment + union-find)  unify.py (full unificatio
                mapping.py (gene IDs)  organisms.py  sources.py  meaning.py (pathway descriptions)
                ppi.py  go.py  enrich.py (ORA, pairs, GSEA, themes)  diagrams.py  maps.py  build.py  cli.py
 web/           FastAPI service and single-page web UI
-Docs/          METHODS, DATA_FORMATS, ROADMAP, DEPLOY, OLD_INTPATH
+Docs/          METHODS, DATA_FORMATS, INTPATH_V1
 legacy/java/   IntPath v1 Java sources: human pipeline, tools/ (alignment, DB writers), organisms/<org>/
-stats/         summary statistics of builds
+stats/         summary counts of the current builds
 ```
 
 ## Licence
