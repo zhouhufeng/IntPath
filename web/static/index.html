@@ -34,7 +34,9 @@ header { border-bottom: 1px solid var(--line); background: var(--panel); }
 .brandbox { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .logo { display: block; height: 48px; width: auto; }
 .tag { color: var(--muted); font-size: 13px; }
-nav { display: flex; gap: 4px; margin-left: auto; }
+nav { display: flex; gap: 4px; }
+.orgpick { margin-left: auto; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+.orgpick select { width: auto; min-width: 220px; font-size: 14px; padding: 6px 8px; }
 nav button { background: none; border: 0; color: var(--muted); padding: 8px 12px; border-radius: 6px; cursor: pointer; font: inherit; }
 nav button.on { color: var(--ink); background: var(--chip); }
 main { padding: 20px 0 48px; }
@@ -99,6 +101,7 @@ footer { color: var(--muted); font-size: 12px; padding: 24px 0; border-top: 1px 
 <body>
 <header><div class="wrap top">
   <div class="brandbox"><img class="logo" src="static/logo.png" alt="IntPath: Integrated pathways" width="148" height="48"><div class="tag">pathways · PPIs · Gene Ontology · enrichment</div></div>
+  <label class="orgpick">Organism <select id="org" aria-label="Organism"></select></label>
   <nav><button data-tab="enrich" class="on">Enrichment</button><button data-tab="browse">Browse</button><button data-tab="about">Data &amp; methods</button></nav>
 </div></header>
 
@@ -106,10 +109,6 @@ footer { color: var(--muted); font-size: 12px; padding: 24px 0; border-top: 1px 
 <main class="wrap">
   <section id="tab-enrich" class="grid">
     <div class="card">
-      <label for="org">Organism</label>
-      <input id="org" list="orgList" placeholder="Search organism: name, KEGG code or taxid" autocomplete="off">
-      <datalist id="orgList"></datalist>
-      <div class="hint" id="orgHint"></div>
       <label>Analysis</label>
       <div class="row seg" id="mode">
         <button data-m="ora" class="on">Gene list</button><button data-m="pairs">Gene pairs</button><button data-m="gsea">Ranked (GSEA)</button>
@@ -193,6 +192,7 @@ function openView(push, state) {
   ["enrich", "browse", "about"].forEach(x => $("#tab-" + x).classList.add("hidden"));
   $("#tab-view").classList.remove("hidden");
   window.scrollTo(0, 0);
+  state.org = org();
   if (push) history.pushState(state, "", `#org=${org()}&${state.view}=${encodeURIComponent(state.id)}`);
 }
 function closeView() {
@@ -202,6 +202,7 @@ function closeView() {
 $("#back").onclick = () => history.state && history.state.view ? history.back() : closeView();
 window.addEventListener("popstate", e => {
   const st = e.state;
+  if (st && st.org && st.org !== org()) { const o = ORGS.find(x => x.key === st.org); if (o) { setOrg(o); loadCollections(); } }
   if (st && st.view === "pathway") showSet(st.id, false);
   else if (st && st.view === "gene") showGene(st.id, false);
   else closeView();
@@ -483,12 +484,14 @@ function networkView(panel, id, name) {
 }
 async function loadOrganisms() {
   ORGS = await fetch(`${BASE}/api/organisms`).then(r => r.json());
-  // curated organisms first; thousands of KEGG organisms are reachable through the search box
-  $("#orgList").innerHTML = ORGS.map(o => `<option value="${esc(o.name)} [${esc(o.key)}]">`).join("");
+  const ORDER = ["sapiens", "musculus", "cerevisiae", "tuberculosis"];
+  const rank = k => (ORDER.indexOf(k) + 1) || 99;
+  ORGS = ORGS.filter(o => o.available).sort((a, b) => rank(a.key) - rank(b.key) || a.name.localeCompare(b.name));  // organisms with a built database
+  $("#org").innerHTML = ORGS.map(o => `<option value="${esc(o.key)}">${esc(o.name)}</option>`).join("");
   if (ORGS.length) setOrg(ORGS.find(o => o.key === "sapiens") || ORGS[0]);
 }
-function setOrg(o) { $("#org").value = `${o.name} [${o.key}]`; $("#org").dataset.key = o.key; }
-const org = () => $("#org").dataset.key || "sapiens";
+function setOrg(o) { $("#org").value = o.key; }
+const org = () => $("#org").value || "sapiens";
 const cols = () => [...document.querySelectorAll("#cols input:checked")].map(i => i.value);
 
 $("#run").onclick = async () => {
@@ -595,10 +598,14 @@ async function loadStats() {
   $("#downloads").innerHTML = "<b>Downloads:</b> " + files.map(f => `<a href="/download/${org()}/${f}">${f}</a>`).join(" · ");
 }
 $("#org").onchange = () => {
-  const v = $("#org").value.trim(), code = (v.match(/\[([^\]]+)\]$/) || [])[1];
-  const o = ORGS.find(x => x.key === code) || ORGS.find(x => x.name.toLowerCase() === v.toLowerCase() || x.kegg === v || x.taxid === v);
-  if (!o) { $("#orgHint").textContent = "No IntPathV2 release for that organism yet."; return; }
-  $("#orgHint").textContent = ""; setOrg(o); loadCollections(); if (!$("#tab-about").classList.contains("hidden")) loadStats(); };
+  // results, searches and open pages belong to the previous organism
+  $("#results").innerHTML = ""; $("#resultMap").classList.add("hidden");
+  $("#status").textContent = "Organism changed: paste genes and run.";
+  $("#browse").innerHTML = ""; $("#searchHint").innerHTML = "";
+  if (!$("#tab-view").classList.contains("hidden")) closeView();
+  loadCollections();
+  if (!$("#tab-about").classList.contains("hidden")) loadStats();
+};
 // Deep links: #org=sapiens&set=<set id>&genes=TP53,MDM2 opens that pathway's map with the genes highlighted.
 function openFromHash() {
   const h = new URLSearchParams(location.hash.slice(1));
