@@ -155,7 +155,8 @@ def create_app(release_root: str | Path | None = None, *, licensed: bool = False
 
     @app.get("/", response_class=HTMLResponse)
     def index():
-        return (STATIC / "index.html").read_text()
+        # the page changes with every release: never let the browser reuse an old copy
+        return HTMLResponse((STATIC / "index.html").read_text(), headers={"Cache-Control": "no-store"})
 
     @app.get("/healthz")
     def healthz():
