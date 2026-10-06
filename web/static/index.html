@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IntPath</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%276%27 fill=%27%231f6f8b%27/%3E%3Cpath d=%27M8 22L14 10L20 18L24 12%27 stroke=%27white%27 stroke-width=%273%27 fill=%27none%27/%3E%3C/svg%3E">
+<link rel="icon" type="image/png" href="static/icon.png">
 <meta name="description" content="IntPath: integrated pathways, PPIs and Gene Ontology with network-aware gene set enrichment for many organisms.">
 <style>
 :root {
@@ -25,10 +25,14 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
 header { border-bottom: 1px solid var(--line); background: var(--panel); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .logo { background: #fff; border-radius: 8px; padding: 3px 8px; } }
+:root[data-theme="dark"] .logo { background: #fff; border-radius: 8px; padding: 3px 8px; }
 .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
 .top { display: flex; align-items: center; gap: 16px; padding: 14px 0; flex-wrap: wrap; }
 .brand { font-weight: 700; font-size: 20px; letter-spacing: .2px; }
 .brand span { color: var(--accent); }
+.brandbox { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.logo { display: block; height: 48px; width: auto; }
 .tag { color: var(--muted); font-size: 13px; }
 nav { display: flex; gap: 4px; margin-left: auto; }
 nav button { background: none; border: 0; color: var(--muted); padding: 8px 12px; border-radius: 6px; cursor: pointer; font: inherit; }
@@ -94,7 +98,7 @@ footer { color: var(--muted); font-size: 12px; padding: 24px 0; border-top: 1px 
 </head>
 <body>
 <header><div class="wrap top">
-  <div><div class="brand">Int<span>Path</span></div><div class="tag">Integrated pathways · PPIs · Gene Ontology · enrichment</div></div>
+  <div class="brandbox"><img class="logo" src="static/logo.png" alt="IntPath: Integrated pathways" width="148" height="48"><div class="tag">pathways · PPIs · Gene Ontology · enrichment</div></div>
   <nav><button data-tab="enrich" class="on">Enrichment</button><button data-tab="browse">Browse</button><button data-tab="about">Data &amp; methods</button></nav>
 </div></header>
 

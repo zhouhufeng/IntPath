@@ -158,6 +158,12 @@ def create_app(release_root: str | Path | None = None, *, licensed: bool = False
         # the page changes with every release: never let the browser reuse an old copy
         return HTMLResponse((STATIC / "index.html").read_text(), headers={"Cache-Control": "no-store"})
 
+    @app.get("/static/{name}")
+    def static_file(name: str):
+        if name not in ("logo.png", "icon.png"):
+            raise HTTPException(404, "not found")
+        return FileResponse(STATIC / name, media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
+
     @app.get("/healthz")
     def healthz():
         return {"ok": True, "organisms": available(), "version": __version__, "licensed": licensed}
