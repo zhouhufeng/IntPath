@@ -40,10 +40,48 @@ IntPathV2 keeps this method and extends it in three ways:
 
 The Python port reproduces the old IntPath database exactly for all four of its organisms (human, mouse, yeast,
 *M. tuberculosis*): every related-pathway pair, integrated pathway name and pathway-gene row.
-The first public IntPathV2 release (open tier, October 2026) covers human, mouse, yeast and
-*M. tuberculosis*. For human it has 3,747 integrated Reactome/WikiPathways pathways, 10,724 GO
-sets, 20,952 MSigDB sets and 1.2 million merged PPI edges. See [Docs/METHODS.md](Docs/METHODS.md) and
-[Docs/OLD_INTPATH.md](Docs/OLD_INTPATH.md).
+See [Docs/METHODS.md](Docs/METHODS.md) and [Docs/OLD_INTPATH.md](Docs/OLD_INTPATH.md).
+
+## IntPath in numbers: old IntPath vs IntPathV2
+
+Old IntPath numbers are from the archived builds, reproduced exactly by the Python port. IntPathV2
+numbers are from the build of 6 October 2026.
+
+| | | *H. sapiens* | *M. musculus* | *S. cerevisiae* | *M. tuberculosis* H37Rv |
+|---|---|---|---|---|---|
+| source pathways | old IntPath | 661 | 678 | 406 | 351 |
+| | IntPathV2 | 4,198 | 2,425 | 1,090 | 143 |
+| related pathway pairs (merged) | old IntPath | 87 | 129 | 136 | 53 |
+| | IntPathV2 | 301 | 170 | 74 | 1 |
+| integrated pathways | old IntPath | 582 | 555 | 285 | 299 |
+| | IntPathV2 | 3,932 | 2,278 | 1,024 | 142 |
+| genes | old IntPath | 7,134 | 8,013 | 1,833 | 1,146 |
+| | IntPathV2 | 14,849 | 14,790 | 3,199 | 1,174 |
+| pathway-gene rows | old IntPath | 23,873 | 24,878 | 5,285 | 4,778 |
+| | IntPathV2 | 209,697 | 136,817 | 20,228 | 3,892 |
+| gene pairs | old IntPath | 50,852 | 64,029 | 3,956 | 6,227 |
+| | IntPathV2 | 193,265 | 137,639 | 5,510 | 3,153 |
+
+- **Related pathway pairs** are the pairs of pathways judged to describe the same biological
+  process and merged into one IntPath pathway. In old IntPath they were found by name alignment
+  and checked by hand. IntPathV2 keeps the alignment and adds a review of all pathway names by
+  meaning; every decision is recorded with its reason. In human, the 301 pairs merge 464 source
+  pathways into 208 IntPath pathways.
+- **Gene pairs** are the unified gene-gene relations of all pathways (used to draw pathway
+  maps and networks). **Genes** per pathway are used for enrichment.
+- For human, IntPathV2 has 2.1× the genes, 3.8× the gene pairs and 6.8× the integrated
+  pathways of old IntPath.
+- *M. tuberculosis* has fewer pathways and gene pairs than in old IntPath. Most of its old
+  pathways came from a source that is not in this build, and the current releases of the other
+  sources have few pathways for it.
+
+Kept alongside the pathways (not merged into them):
+
+| | *H. sapiens* | *M. musculus* | *S. cerevisiae* | *M. tuberculosis* H37Rv |
+|---|---|---|---|---|
+| physical PPI edges (merged) | 1,151,307 | 85,239 | 236,630 | 93 |
+| GO gene sets | 10,724 | 11,718 | 3,451 | 1,063 |
+| MSigDB gene sets | 21,902 | 4,786 | – | – |
 
 ## Quick start
 
