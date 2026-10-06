@@ -2,17 +2,18 @@
 
 **IntPath** is an integrated pathway and gene-relationship database for model organisms and
 important pathogens. It also provides gene set enrichment analysis on the integrated data.
-This repository holds the public scripts, documentation and summary statistics for
-**IntPathV2** (in development; a first public release is live at **https://intpath.genohub.org**). It also
-keeps the old IntPath code for reference.
+This repository holds the public scripts, documentation and summary statistics of **IntPathV2**,
+which is in development. It also keeps the IntPath v1 code for reference.
 
 There are two versions:
 
-- **Old IntPath**: the database and methods published in 2012, covering human, mouse, yeast and
+- **IntPath v1**: the database and methods published in 2012, covering human, mouse, yeast and
   *M. tuberculosis*. Everything described in the paper below refers to this version. Its Java
   code is in `legacy/java/`, and [Docs/OLD_INTPATH.md](Docs/OLD_INTPATH.md) summarises it.
 - **IntPathV2**: the new version, in development. It is the Python package, web service and
   documentation in this repository.
+
+Please cite:
 
 > Zhou H, Jin J, Zhang H, Yi B, Wozniak M, Wong L. IntPath: an integrated pathway gene
 > relationship database for model organisms and important pathogens. *BMC Systems Biology*
@@ -22,58 +23,57 @@ There are two versions:
 
 Pathway databases describe the same biology with different formats, gene identifiers,
 relationship vocabularies and pathway names. IntPath extracts the pathways, normalises gene IDs
-and relationships, finds the pathways that different databases (and each database internally)
-describe under related names, and **fully unifies** them. Every gene and gene pair is kept,
-with the sources that support it ("no deletion, no introduced noise").
+and relationships, finds the pathways that describe the same biological process under related
+names, and **fully unifies** them: every gene and gene pair of the merged pathways is kept ("no
+deletion, no introduced noise"). Each IntPath pathway lists the original pathway names it was
+merged from, with what each one means.
 
-IntPathV2 keeps this method and extends it in three ways:
+IntPathV2 keeps this method and extends it:
 
-| | Old IntPath (2012) | IntPathV2 |
+| | IntPath v1 (2012) | IntPathV2 |
 |---|---|---|
-| organisms | human, mouse, yeast, *M. tuberculosis* | the same 4 plus rat, zebrafish, fly, worm, *Arabidopsis*, *E. coli*; extensible registry |
-| pathways | KEGG, WikiPathways, BioCyc | KEGG, **Reactome** (with topology and hierarchy), WikiPathways, BioCyc (licensed) |
-| PPIs | STRING (used for distances) | **merged** STRING + BioGRID + IntAct + MINT + HuRI, with evidence and confidence tiers, overlaid on pathways |
-| MSigDB | – | companion library (Hallmarks, C1–C9, mouse M-collections), copies of Reactome/WikiPathways/GO linked rather than double-counted |
-| GO | – | **GO BP/MF/CC**, propagated, lossless merge of redundant terms, linked to pathways |
-| enrichment | hypergeometric "Identify Pathways" | ORA with **source consensus**, **gene-pair (network) enrichment**, **preranked GSEA**, redundancy-aware **themes** |
+| organisms | human, mouse, yeast, *M. tuberculosis* | the same 4; more organisms planned |
+| pathways | merged by name alignment, checked by hand | many more pathways; merged by name alignment plus a review of all pathway names by meaning, every decision recorded with its reason |
+| gene pairs | unified gene-gene relations per pathway | the same, used to draw pathway maps and networks |
+| PPIs | used for distances | merged physical PPI network with confidence tiers, kept separate from the pathways |
+| GO | – | GO BP/MF/CC gene sets, kept separate |
+| MSigDB | – | MSigDB gene sets (human, mouse), kept separate |
+| enrichment | hypergeometric "Identify Pathways" | over-representation, gene-pair (network) enrichment, preranked GSEA, results grouped into themes |
+| maps | – | pathway maps drawn in the browser with your genes highlighted, plus a network view of the merged gene pairs |
 | code | Java + MySQL | Python package + REST API + web UI |
 
-The Python port reproduces the old IntPath database exactly for all four of its organisms (human, mouse, yeast,
-*M. tuberculosis*): every related-pathway pair, integrated pathway name and pathway-gene row.
-See [Docs/METHODS.md](Docs/METHODS.md) and [Docs/OLD_INTPATH.md](Docs/OLD_INTPATH.md).
+The Python port reproduces the IntPath v1 database exactly for all four of its organisms: every
+related pathway pair, integrated pathway name and pathway-gene row. See
+[Docs/METHODS.md](Docs/METHODS.md) and [Docs/OLD_INTPATH.md](Docs/OLD_INTPATH.md).
 
-## IntPath in numbers: old IntPath vs IntPathV2
+## IntPath in numbers: v1 vs V2
 
-Old IntPath numbers are from the archived builds, reproduced exactly by the Python port. IntPathV2
-numbers are from the build of 6 October 2026.
+v1 numbers are from the archived builds, reproduced exactly by the Python port. V2 numbers are
+from the build of 6 October 2026.
 
 | | | *H. sapiens* | *M. musculus* | *S. cerevisiae* | *M. tuberculosis* H37Rv |
 |---|---|---|---|---|---|
-| source pathways | old IntPath | 661 | 678 | 406 | 351 |
-| | IntPathV2 | 4,198 | 2,425 | 1,090 | 143 |
-| related pathway pairs (merged) | old IntPath | 87 | 129 | 136 | 53 |
-| | IntPathV2 | 301 | 170 | 74 | 1 |
-| integrated pathways | old IntPath | 582 | 555 | 285 | 299 |
-| | IntPathV2 | 3,932 | 2,278 | 1,024 | 142 |
-| genes | old IntPath | 7,134 | 8,013 | 1,833 | 1,146 |
-| | IntPathV2 | 14,849 | 14,790 | 3,199 | 1,174 |
-| pathway-gene rows | old IntPath | 23,873 | 24,878 | 5,285 | 4,778 |
-| | IntPathV2 | 209,697 | 136,817 | 20,228 | 3,892 |
-| gene pairs | old IntPath | 50,852 | 64,029 | 3,956 | 6,227 |
-| | IntPathV2 | 193,265 | 137,639 | 5,510 | 3,153 |
+| source pathways | v1 | 661 | 678 | 406 | 351 |
+| | V2 | 4,198 | 2,425 | 1,090 | 143 |
+| related pathway pairs (merged) | v1 | 87 | 129 | 136 | 53 |
+| | V2 | 301 | 170 | 74 | 1 |
+| integrated pathways | v1 | 582 | 555 | 285 | 299 |
+| | V2 | 3,932 | 2,278 | 1,024 | 142 |
+| genes | v1 | 7,134 | 8,013 | 1,833 | 1,146 |
+| | V2 | 14,849 | 14,790 | 3,199 | 1,174 |
+| pathway-gene rows | v1 | 23,873 | 24,878 | 5,285 | 4,778 |
+| | V2 | 209,697 | 136,817 | 20,228 | 3,892 |
+| gene pairs | v1 | 50,852 | 64,029 | 3,956 | 6,227 |
+| | V2 | 193,265 | 137,639 | 5,510 | 3,153 |
 
-- **Related pathway pairs** are the pairs of pathways judged to describe the same biological
-  process and merged into one IntPath pathway. In old IntPath they were found by name alignment
-  and checked by hand. IntPathV2 keeps the alignment and adds a review of all pathway names by
-  meaning; every decision is recorded with its reason. In human, the 301 pairs merge 464 source
+- **Related pathway pairs** are pairs of pathways judged to describe the same biological
+  process and merged into one IntPath pathway. In human, the 301 pairs merge 464 source
   pathways into 208 IntPath pathways.
-- **Gene pairs** are the unified gene-gene relations of all pathways (used to draw pathway
-  maps and networks). **Genes** per pathway are used for enrichment.
-- For human, IntPathV2 has 2.1× the genes, 3.8× the gene pairs and 6.8× the integrated
-  pathways of old IntPath.
-- *M. tuberculosis* has fewer pathways and gene pairs than in old IntPath. Most of its old
-  pathways came from a source that is not in this build, and the current releases of the other
-  sources have few pathways for it.
+- **Gene pairs** are the unified gene-gene relations of all pathways. **Genes** per pathway are
+  used for enrichment.
+- For human, V2 has 2.1× the genes, 3.8× the gene pairs and 6.8× the integrated pathways of v1.
+- *M. tuberculosis* has fewer pathways and gene pairs than in v1. Most of its v1 pathways came
+  from a source that is not in this build, and current pathway releases have few pathways for it.
 
 Kept alongside the pathways (not merged into them):
 
@@ -88,11 +88,10 @@ Kept alongside the pathways (not merged into them):
 ```bash
 pip install -e '.[web,test]'
 intpath organisms                         # supported organisms
-intpath build sapiens                     # download sources and build a release in Data/intpathv2/release/sapiens
-intpath build sapiens --public            # only openly redistributable sources (no KEGG/BioCyc)
-intpath ora   Data/intpathv2/release/sapiens genes.txt --top 20
-intpath pairs Data/intpathv2/release/sapiens genes.txt --with-ppi
-intpath gsea  Data/intpathv2/release/sapiens ranking.tsv --collections pathway,GO:BP
+intpath build sapiens                     # download the data and build Data/intpathv2/db/sapiens
+intpath ora   Data/intpathv2/db/sapiens genes.txt --top 20
+intpath pairs Data/intpathv2/db/sapiens genes.txt --with-ppi
+intpath gsea  Data/intpathv2/db/sapiens ranking.tsv --collections pathway,GO:BP
 intpath serve                             # web UI + REST API at http://127.0.0.1:8000 (docs at /docs)
 pytest
 ```
@@ -101,17 +100,16 @@ pytest
 
 ```
 src/intpath/   names.py (name alignment + union-find)  unify.py (full unification)
-               mapping.py (gene IDs)  organisms.py  sources.py (KEGG/Reactome/WikiPathways/BioCyc)
-               ppi.py  go.py  enrich.py (ORA, pairs, GSEA, themes)  build.py  cli.py
-web/           FastAPI service and single-page UI for intpath.genohub.org
+               review.py + data/merge_curation.tsv (recorded merge decisions)
+               mapping.py (gene IDs)  organisms.py  sources.py  meaning.py (pathway descriptions)
+               ppi.py  go.py  enrich.py (ORA, pairs, GSEA, themes)  diagrams.py  maps.py  build.py  cli.py
+web/           FastAPI service and single-page web UI
 Docs/          METHODS, DATA_FORMATS, ROADMAP, DEPLOY, OLD_INTPATH
-legacy/java/   old IntPath Java sources: human pipeline, tools/ (alignment, DB writers), organisms/<org>/
+legacy/java/   IntPath v1 Java sources: human pipeline, tools/ (alignment, DB writers), organisms/<org>/
 stats/         summary statistics of builds
 ```
 
-## Data licensing
+## Licence
 
-The code is public. Built data inherit their sources' licences. WikiPathways, Reactome, GO,
-NCBI Gene, HGNC, STRING, BioGRID and IntAct are open (CC0, CC-BY or MIT). **KEGG** and
-**BioCyc** content may not be redistributed without a licence, so public downloads are built
-with `--public`.
+The code is public. The data that IntPath builds are subject to the terms of the databases they
+are built from; check those terms before redistributing a built database.

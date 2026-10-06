@@ -52,7 +52,7 @@ def main(argv: list[str] | None = None) -> None:
     b = sub.add_parser("build", help="download sources and build a release for an organism")
     b.add_argument("organism")
     b.add_argument("--raw", default="Data/intpathv2/raw")
-    b.add_argument("--out", default="Data/intpathv2/release")
+    b.add_argument("--out", default="Data/intpathv2/db")
     b.add_argument("--sources", default="KEGG,Reactome,WikiPathways")
     b.add_argument("--biocyc-col", help="licensed BioCyc pathways.col file")
     b.add_argument("--ppi", action="append", default=[], metavar="LABEL:FORMAT:PATH",
