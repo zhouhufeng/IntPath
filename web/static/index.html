@@ -58,6 +58,7 @@ td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .genes { font-family: var(--mono); font-size: 12px; color: var(--muted); max-width: 360px; }
 a { color: var(--accent); cursor: pointer; text-decoration: none; }
 .hidden { display: none; }
+.backbtn { background: none; border: 1px solid var(--line, #ccc); border-radius: 6px; padding: 4px 12px; cursor: pointer; margin-bottom: 8px; }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
 .stat b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
 .stat span { color: var(--muted); font-size: 12px; }
@@ -132,7 +133,14 @@ footer { color: var(--muted); font-size: 12px; padding: 24px 0; border-top: 1px 
     <div class="card">
       <div class="row"><input id="q" placeholder="Search a pathway, GO term or gene (e.g. apoptosis, TP53)" style="flex:1"><button class="go" style="width:auto;margin:0" id="search">Search</button></div>
       <div class="tablewrap" style="margin-top:12px"><table id="browse"></table></div>
-      <div id="detail" style="margin-top:16px"></div>
+      <div id="searchHint" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <section id="tab-view" class="hidden">
+    <div class="card">
+      <button id="back" class="backbtn">&larr; Back</button>
+      <div id="detail"></div>
     </div>
   </section>
 
@@ -169,7 +177,30 @@ const fmt = x => x == null ? "" : (x < 1e-3 ? x.toExponential(1) : (+x).toPrecis
 document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
   ["enrich", "browse", "about"].forEach(t => $("#tab-" + t).classList.toggle("hidden", t !== b.dataset.tab));
+  $("#tab-view").classList.add("hidden");
   if (b.dataset.tab === "about") loadStats();
+});
+
+// Pathway and gene pages open as their own page (with browser history), not under the result list.
+let VIEW_FROM = "enrich";
+function openView(push, state) {
+  const t = ["enrich", "browse", "about"].find(x => !$("#tab-" + x).classList.contains("hidden"));
+  if (t) VIEW_FROM = t;
+  ["enrich", "browse", "about"].forEach(x => $("#tab-" + x).classList.add("hidden"));
+  $("#tab-view").classList.remove("hidden");
+  window.scrollTo(0, 0);
+  if (push) history.pushState(state, "", `#org=${org()}&${state.view}=${encodeURIComponent(state.id)}`);
+}
+function closeView() {
+  $("#tab-view").classList.add("hidden");
+  document.querySelector(`nav button[data-tab="${VIEW_FROM}"]`).click();
+}
+$("#back").onclick = () => history.state && history.state.view ? history.back() : closeView();
+window.addEventListener("popstate", e => {
+  const st = e.state;
+  if (st && st.view === "pathway") showSet(st.id, false);
+  else if (st && st.view === "gene") showGene(st.id, false);
+  else closeView();
 });
 document.querySelectorAll("#mode button").forEach(b => b.onclick = () => {
   mode = b.dataset.m;
@@ -502,14 +533,15 @@ $("#search").onclick = async () => {
   const [r, g] = await Promise.all([
     fetch(`${BASE}/api/${org()}/search?q=${encodeURIComponent(term)}`).then(r => r.json()),
     fetch(`${BASE}/api/${org()}/gene/${encodeURIComponent(term)}?limit=1`).then(r => r.ok ? r.json() : null)]);
-  $("#detail").innerHTML = g ? `<p>Gene <a onclick="showGene('${esc(g.gene)}')"><b>${esc(g.gene)}</b></a>: ${g.sets.length} gene sets — open the gene page for PPI partners.</p>` : "";
+  $("#searchHint").innerHTML = g ? `<p>Gene <a onclick="showGene('${esc(g.gene)}')"><b>${esc(g.gene)}</b></a>: ${g.sets.length} gene sets — open the gene page for PPI partners.</p>` : "";
   $("#browse").innerHTML = "<tr><th>Name</th><th>Library</th><th>Genes</th></tr>" + r.map(s =>
     `<tr><td><a onclick="showSet('${esc(s.id)}')">${esc(s.name)}</a></td><td>${esc(libLabel(s.collection))}</td><td class="num">${s.n_genes}</td></tr>`).join("");
 };
 $("#q").onkeydown = e => { if (e.key === "Enter") $("#search").click(); };
 
-async function showSet(id) {
-  document.querySelector('nav button[data-tab="browse"]').click();
+async function showSet(id, push = true) {
+  openView(push, {view: "pathway", id});
+  $("#detail").innerHTML = `<p class="hint">Loading…</p>`;
   const s = await fetch(`${BASE}/api/${org()}/set/${encodeURIComponent(id)}`).then(r => r.json());
   const genes = Object.entries(s.genes);
   $("#detail").innerHTML = `<h3>${esc(s.name)} <span class="chip">${esc(s.id)}</span></h3>
@@ -521,10 +553,11 @@ async function showSet(id) {
     ${s.pairs.length ? `<p><b>${s.pairs.length} gene pairs</b></p>
     <div class="tablewrap"><table><tr><th>Gene A</th><th>Gene B</th><th>Relation</th></tr>${s.pairs.slice(0, 300).map(p => `<tr><td>${esc(p.a)}</td><td>${esc(p.b)}</td><td>${p.relations.join(", ")}</td></tr>`).join("")}</table></div>` : ""}`;
   mapPanel($("#setMap"), id, s.name, false);
-  $("#detail").scrollIntoView({behavior: "smooth", block: "start"});
 }
 
-async function showGene(sym) {
+async function showGene(sym, push = true) {
+  openView(push, {view: "gene", id: sym});
+  $("#detail").innerHTML = `<p class="hint">Loading…</p>`;
   const g = await fetch(`${BASE}/api/${org()}/gene/${encodeURIComponent(sym)}`).then(r => r.json());
   $("#detail").innerHTML = `<h3>${esc(g.gene)}</h3>
     <p><b>${g.sets.length} gene sets</b></p>
@@ -533,7 +566,6 @@ async function showGene(sym) {
     <div class="tablewrap"><table><tr><th>Partner</th><th>Publications</th><th>Confidence</th><th>Also a pathway gene pair</th></tr>${g.ppi_partners.map(p => `<tr><td><a onclick="showGene('${esc(p.gene)}')">${esc(p.gene)}</a></td><td class="num">${p.n_pmids}</td><td>${esc(p.tier)}</td><td>${p.pathway_supported ? "yes" : ""}</td></tr>`).join("")}</table></div>
     ${(g.string_partners || []).length ? `<p><b>${g.string_partners.length} STRING partners</b></p>
     <div class="tablewrap"><table><tr><th>Partner</th><th>STRING score</th></tr>${g.string_partners.map(p => `<tr><td><a onclick="showGene('${esc(p.gene)}')">${esc(p.gene)}</a></td><td class="num">${p.string_score}</td></tr>`).join("")}</table></div>` : ""}`;
-  $("#detail").scrollIntoView({behavior: "smooth", block: "start"});
 }
 
 const COLLECTION_LABELS = {"pathway": "IntPath pathways", "GO:BP": "GO biological process", "GO:MF": "GO molecular function", "GO:CC": "GO cellular component", "msigdb:H": "MSigDB Hallmarks"};
@@ -566,13 +598,21 @@ $("#org").onchange = () => {
 // Deep links: #org=sapiens&set=<set id>&genes=TP53,MDM2 opens that pathway's map with the genes highlighted.
 function openFromHash() {
   const h = new URLSearchParams(location.hash.slice(1));
+  if (!h.get("set") && (h.get("pathway") || h.get("gene"))) {  // a reloaded pathway/gene page
+    const o = ORGS.find(x => x.key === h.get("org"));
+    if (o) setOrg(o);
+    if (h.get("pathway")) showSet(h.get("pathway"), false); else showGene(h.get("gene"), false);
+    history.replaceState({view: h.get("pathway") ? "pathway" : "gene", id: h.get("pathway") || h.get("gene")}, "", location.hash);
+    return;
+  }
   if (!h.get("set")) return;
   const o = ORGS.find(x => x.key === h.get("org"));
   if (o) setOrg(o);
   QUERY = {genes: (h.get("genes") || "").split(",").filter(Boolean), values: null};
   showSet(h.get("set"));
 }
-window.addEventListener("hashchange", openFromHash);
+// pathway/gene pages are restored by popstate; only shared map links (set=...) are handled here
+window.addEventListener("hashchange", () => { if (new URLSearchParams(location.hash.slice(1)).get("set")) openFromHash(); });
 loadOrganisms().then(loadCollections).then(openFromHash);
 </script>
 </body>
