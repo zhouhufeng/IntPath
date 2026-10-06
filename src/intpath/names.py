@@ -52,6 +52,31 @@ INTPATHV2_MISMATCHES: tuple[tuple[str, str], ...] = (
     ("synthesis", "degradation"),
     ("activation", "inhibition"),
     ("positive regulation", "negative regulation"),
+    # IntPathV2 curation (human KEGG + Reactome + WikiPathways review, 2026-10-06): pathways
+    # whose names align but whose meanings differ are never merged
+    ("Non-alcoholic", "Alcoholic liver"),
+    ("Nonalcoholic", "Alcoholic liver"),
+    ("Hepatitis B", "Hepatitis C"),
+    ("Prion", "Parkinson"),
+    ("EPO receptor", "Hepatocyte growth factor receptor"),
+    ("Rap1", "Ras signaling"),
+    ("Renin secretion", "Insulin secretion"),
+    ("Osteoblast", "Osteoclast"),
+    ("Omega 3", "Omega 6"),
+    ("Carbohydrate digestion", "Fat digestion"),
+    ("Non-small cell", "Small cell lung"),
+    ("Non small cell", "Small cell lung"),
+    ("Integrated breast cancer", "Integrated cancer pathway"),
+    ("Focal adhesion PI3K", "PI3K Akt signaling"),
+    ("Focal adhesion PI3K", "PI3K-Akt signaling"),
+    ("Vitamins", "Vitamin D"),
+    ("Neolacto series", "Lacto series"),
+    ("biosynthesis - ganglio series", "Glycosphingolipid biosynthesis"),
+    ("biosynthesis - globo and isoglobo series", "Glycosphingolipid biosynthesis"),
+    ("biosynthesis - lacto and neolacto series", "Glycosphingolipid biosynthesis"),
+    ("Alternative complement", "Classical antibody-mediated complement"),
+    ("Dengue 2 interactions", "Complement and coagulation cascades"),
+    ("Hippo Merlin signaling dysregulation", "Hippo signaling regulation"),
 )
 
 # --------------------------------------------------------------------------- #
@@ -185,7 +210,13 @@ def integrated_name(shortest: str, legacy: bool = True, rules: Rules | None = No
     name = " ".join(tokens)
     if legacy:
         return name + " "  # the Java implementation leaves a trailing blank
-    return name.strip() or shortest.strip()
+    # IntPathV2: keep every word of the shortest name (the old per-organism drop lists removed
+    # words such as "Small" and broke names like "Small cell lung cancer"); drop only a trailing
+    # variant numeral ("... biosynthesis II" -> "... biosynthesis")
+    words = shortest.strip().split()
+    while len(words) > 1 and _ROMAN.match(words[-1]):
+        words.pop()
+    return " ".join(words) or shortest.strip()
 
 
 # --------------------------------------------------------------------------- #
@@ -201,6 +232,8 @@ class Match:
     score: int
     ratio: float
     overlap: float | None = None  # gene-set overlap coefficient, when checked
+    decision: str = "accept"  # accept | reject | pending (IntPathV2 review, see intpath.review)
+    reason: str = ""
 
 
 def _best_hit(name: str, candidates: Sequence[str]) -> tuple[str | None, Alignment]:

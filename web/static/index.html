@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IntPath</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%276%27 fill=%27%231f6f8b%27/%3E%3Cpath d=%27M8 22L14 10L20 18L24 12%27 stroke=%27white%27 stroke-width=%273%27 fill=%27none%27/%3E%3C/svg%3E">
 <meta name="description" content="IntPath: integrated pathways, PPIs and Gene Ontology with network-aware gene set enrichment for many organisms.">
 <style>
 :root {
@@ -60,8 +61,35 @@ a { color: var(--accent); cursor: pointer; text-decoration: none; }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
 .stat b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
 .stat span { color: var(--muted); font-size: 12px; }
+.mappanel { border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 14px; background: var(--bg); }
+.mappanel h4 { margin: 0 0 6px; font-size: 15px; display: flex; justify-content: space-between; gap: 8px; }
+.mapbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 6px 0; font-size: 13px; }
+.mapbar select, .mapbar button { width: auto; font-size: 13px; padding: 4px 8px; }
+.mapbar button, .mapbtn { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 6px; cursor: pointer; font: inherit; font-size: 12px; padding: 2px 8px; }
+.mapbtn:hover, .mapbar button:hover { border-color: var(--accent); color: var(--accent); }
+.cy { width: 100%; height: 560px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); margin-top: 6px; }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { display: inline-block; width: 20px; height: 3px; border-radius: 2px; }
+.legend b { display: inline-block; width: 11px; height: 11px; border-radius: 50%; }
+.mapwrap { display: grid; grid-template-columns: 1fr 250px; gap: 10px; }
+.mapwrap.noside { grid-template-columns: 1fr; }
+.mapwrap.noside .side { display: none; }
+@media (max-width: 900px) { .mapwrap { grid-template-columns: 1fr; } }
+.side { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 8px; max-height: 640px; overflow-y: auto; font-size: 12px; }
+.sidehead { margin-bottom: 6px; color: var(--ink); }
+.sidelist { list-style: none; margin: 0; padding: 0; }
+.sidelist li { padding: 3px 6px; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 2px 6px; align-items: baseline; }
+.sidelist li.mine a { color: #c0392b; font-weight: 700; }
+.sidelist .srcs { color: var(--muted); font-size: 11px; }
+.maptabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 8px; }
+.maptabs .mapbtn.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.mapinfo { font-size: 12px; color: var(--muted); min-height: 18px; margin-top: 4px; }
 footer { color: var(--muted); font-size: 12px; padding: 24px 0; border-top: 1px solid var(--line); }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.34.3/cytoscape.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.min.js"></script>
 </head>
 <body>
 <header><div class="wrap top">
@@ -89,12 +117,13 @@ footer { color: var(--muted); font-size: 12px; padding: 24px 0; border-top: 1px 
       <div class="checks" id="ppiBox" style="display:none">
         <label><input type="checkbox" id="withPPI" checked>Add merged PPI edges inside pathways</label>
         <label for="tier" style="display:block;color:var(--muted)">PPI confidence</label>
-        <select id="tier"><option value="high" selected>high (≥2 experimental sources or publications, or STRING ≥ 900)</option><option value="medium">medium (+ single experimental source, STRING ≥ 700)</option><option value="low">all merged edges</option></select>
+        <select id="tier"><option value="high" selected>high (≥2 experimental sources or publications, or STRING ≥ 900)</option><option value="medium">medium (+ single experimental source, STRING ≥ 700)</option><option value="low">all physical PPIs</option><option value="string">STRING</option></select>
       </div>
       <button class="go" id="run">Run analysis</button>
     </div>
     <div class="card">
       <div class="status" id="status">Paste genes and run. Results are grouped into themes so redundant pathways/GO terms show once.</div>
+      <div id="resultMap" class="mappanel hidden"></div>
       <div class="tablewrap"><table id="results"></table></div>
     </div>
   </section>
@@ -151,6 +180,272 @@ document.querySelectorAll("#mode button").forEach(b => b.onclick = () => {
 $("#example").onclick = () => { $("#input").value = examples[mode]; };
 
 let ORGS = [];
+let QUERY = {genes: [], values: null};  // the latest analysed list (and GSEA scores) for map highlighting
+const LEADING = {};  // GSEA: set id -> leading-edge genes of that result
+// Genes outlined as "yours" on a map: the analysed list, or for GSEA the result's leading edge
+// (the whole ranking would mark every gene; GSEA scores colour the boxes instead).
+const highlightFor = id => QUERY.values ? (LEADING[id] || []) : QUERY.genes;
+const REL = {ECrel: ["#2a9d8f", "enzyme → enzyme (ECrel)"], PPrel: ["#3a6ea5", "protein interaction / control (PPrel)"],
+             GErel: ["#c77d1a", "gene expression (GErel)"], GPrel: ["#8e7cc3", "same complex (GPrel)"],
+             PPI: ["#9aa5b1", "added PPI (physical PPI or STRING)"]};
+
+function openResultMap(id, name) {
+  const panel = $("#resultMap");
+  panel.classList.remove("hidden");
+  mapPanel(panel, id, name, true);
+  panel.scrollIntoView({behavior: "smooth", block: "start"});
+}
+
+// A pathway map panel: one tab per source diagram (KEGG, WikiPathways, Reactome) plus the network view.
+async function mapPanel(panel, id, name, closable) {
+  panel.innerHTML = `<h4><span>${esc(name)}</span>${closable ? `<button class="mapbtn" onclick="this.closest('.mappanel').classList.add('hidden')">Close</button>` : ""}</h4>
+    <div class="maptabs"></div><div class="mapbody"></div>`;
+  const tabs = panel.querySelector(".maptabs"), body = panel.querySelector(".mapbody");
+  const list = await fetch(`${BASE}/api/${org()}/diagrams/${encodeURIComponent(id)}`).then(r => r.ok ? r.json() : []);
+  const views = list.map(d => ({label: `Map: ${d.member_name || d.name || d.id}`, d}));
+  views.push({label: "Network (merged gene pairs)", d: null});
+  const show = i => {
+    tabs.querySelectorAll("button").forEach((b, j) => b.classList.toggle("on", i === j));
+    const v = views[i];
+    if (!v.d) return networkView(body, id, name);
+    return drawingView(body, v.d, id);
+  };
+  tabs.innerHTML = views.map((v, i) => `<button class="mapbtn">${esc(v.label)}</button>`).join("");
+  tabs.querySelectorAll("button").forEach((b, i) => b.onclick = () => show(i));
+  show(0);
+}
+
+// Sidebar: the integrated pathway's genes that this source diagram does not draw (merged from other sources).
+async function sidebar(side, setId, dg, vals, cy) {
+  const s = await fetch(`${BASE}/api/${org()}/set/${encodeURIComponent(setId)}`).then(r => r.ok ? r.json() : null);
+  if (!s) { side.innerHTML = ""; return; }
+  const drawn = new Set(dg.nodes.flatMap(n => n.genes || []));
+  const all = Object.entries(s.genes);
+  const hl = new Set(highlightFor(setId).map(g => g.toUpperCase()));
+  const missing = all.filter(([g]) => !drawn.has(g));
+  const val = g => vals ? vals[g.toUpperCase()] : undefined;
+  const mark = g => hl.has(g.toUpperCase()) || (vals && val(g) !== undefined);
+  missing.sort((a, b) => (mark(b[0]) - mark(a[0])) || (Math.abs(val(b[0]) || 0) - Math.abs(val(a[0]) || 0)) || a[0].localeCompare(b[0]));
+  const onDiagram = all.length - missing.length;
+  if (!missing.length) {  // nothing to list: give the diagram the full width
+    side.parentElement.classList.add("noside");
+    if (cy) { cy.resize(); cy.fit(undefined, 12); }
+    return;
+  }
+  const yourMissing = missing.filter(([g]) => hl.has(g.toUpperCase())).length;
+  const colour = g => { const v = val(g); if (v === undefined) return ""; const c = v > 0 ? "#d1495b" : "#3a6ea5"; return `style="border-left:3px solid ${c}"`; };
+  side.innerHTML = `<div class="sidehead"><b>${onDiagram}</b> of ${all.length} genes of this integrated pathway are on this diagram.</div>
+    ${missing.length ? `<div class="sidehead"><b>${missing.length} more</b> come from the other merged sources${hl.size ? ` (${yourMissing} ${yourMissing === 1 ? "is a" : "are"} ${QUERY.values ? "leading-edge" : "your"} gene${yourMissing === 1 ? "" : "s"})` : ""}:</div>
+    <ul class="sidelist">${missing.map(([g, src]) => `<li ${colour(g)} class="${hl.has(g.toUpperCase()) ? "mine" : ""}"><a onclick="showGene('${esc(g)}')">${esc(g)}</a>
+      <span class="srcs">${src.map(x => esc(x)).join(", ")}</span>${val(g) !== undefined ? `<span class="srcs">score ${(+val(g)).toPrecision(3)}</span>` : ""}</li>`).join("")}</ul>`
+    : ""}`;
+}
+
+// Per-source notation, matching how each database draws its diagrams.
+const LEGENDS = {
+  KEGG: `<span><b style="background:#BFFFBF"></b>gene product of this organism</span><span>○ compound</span><span>→ activation</span>
+    <span>⊣ inhibition</span><span>+p / -p (de)phosphorylation</span><span>e expression</span><span>- - → indirect effect</span><span>rounded box: linked pathway</span>`,
+  WikiPathways: `<span>□ gene product</span><span>→ conversion / stimulation</span><span>⊣ inhibition</span><span>-○ catalysis</span>
+    <span>dashed boxes: complexes/groups</span><span>grey outlines: cellular compartments</span>`,
+  Reactome: `<span><b style="background:#a8e4b0"></b>protein</span><span><b style="background:#a9cfe8"></b>complex / set</span><span><b style="background:#c7dbe9"></b>chemical</span>
+    <span>▫ reaction</span><span>→ output</span><span>-○ catalysis</span><span>⊣ inhibition</span><span>grey outlines: compartments</span><span>faded: outside the selected sub-pathway</span>`,
+};
+
+// A source drawing (KEGG KGML, WikiPathways GPML or Reactome layout) at its original coordinates.
+async function drawingView(body, d, setId) {
+  const uid = "d" + Math.random().toString(36).slice(2, 8);
+  const genes = highlightFor(setId).slice(0, 5000).join(",");
+  const srcLink = d.source === "KEGG" ? `https://www.kegg.jp/pathway/${d.id}`
+    : d.source === "Reactome" ? `https://reactome.org/PathwayBrowser/#/${d.focus || d.id}` : `https://www.wikipathways.org/pathways/${d.id}`;
+  const credit = d.source === "Reactome" ? "Reactome (CC BY 4.0)" : d.source === "WikiPathways" ? "WikiPathways (CC0)" : "KEGG";
+  body.innerHTML = `<div class="mapbar"><button class="fit">Fit</button><button class="png">PNG</button>
+      <a href="${srcLink}" target="_blank" rel="noopener">open at ${esc(d.source)}</a>
+      <span class="hint">original ${esc(credit)} layout${d.focus ? ` · ${esc(d.focus)} is drawn inside its parent diagram and shown in focus` : ""} · ${QUERY.values ? "colour = your score (red up, blue down), bold outline = leading-edge genes" : "your genes in red"} · click a box for its genes, double-click a gene for its page</span></div>
+    <div class="mapwrap"><div class="cy" id="${uid}" style="height:640px"></div><aside class="side"><div class="hint">Loading genes…</div></aside></div>
+    <div class="mapinfo"></div>
+    <div class="legend">${QUERY.values ? `<span><b style="background:#fff;border:2px solid #7a0000"></b>leading-edge genes</span>` : `<span><b style="background:#ff5a5a"></b>your genes</span>`}${LEGENDS[d.source] || ""}
+      ${QUERY.values ? `<span><b style="background:#d1495b"></b>up · <b style="background:#3a6ea5"></b>down (your scores)</span>` : ""}</div>`;
+  const info = body.querySelector(".mapinfo");
+  info.textContent = "Loading the diagram…";
+  const r = await fetch(`${BASE}/api/${org()}/diagram/${d.source}/${encodeURIComponent(d.id)}?genes=${encodeURIComponent(genes)}&focus=${encodeURIComponent(d.focus || "")}`);
+  if (!r.ok) { info.textContent = "This diagram is not available."; return; }
+  const dg = await r.json();
+  const vals = QUERY.values ? Object.fromEntries(Object.entries(QUERY.values).map(([k, v]) => [k.toUpperCase(), v])) : null;
+  const maxAbs = vals ? Math.max(1e-9, ...Object.values(vals).map(Math.abs)) : 1;
+  const els = [];
+  for (const n of dg.nodes) {
+    const data = {id: n.id, label: n.label || "", kind: n.kind, w: Math.max(n.w || 1, 1), h: Math.max(n.h || 1, 1),
+                  shape: n.shape || "rectangle", genes: n.genes || [], hit: !!n.hit,
+                  fill: n.fill || "#ffffff", border: n.color || "#333333", focus: n.focus === undefined ? true : n.focus};
+    if (n.parent) data.parent = n.parent;
+    if (vals && n.genes) {
+      const sc = n.genes.map(g => vals[g.toUpperCase()]).filter(v => v !== undefined);
+      if (sc.length) data.score = sc.reduce((a, b) => Math.abs(b) > Math.abs(a) ? b : a) / maxAbs;
+    }
+    els.push(n.kind === "group" || n.x === undefined ? {data} : {data, position: {x: n.x, y: n.y}});
+  }
+  for (const e of dg.edges) els.push({data: {id: "E" + e.id, source: e.source, target: e.target, arrow: e.arrow || "none",
+    tail: e.tail || "none", line: e.line || "solid", label: e.label || "", kind: e.kind, color: e.color || "#333333"}});
+  if (!window.cytoscape) { info.textContent = "The map library could not load (offline?)."; return; }
+  const cy = cytoscape({container: document.getElementById(uid), elements: els, layout: {name: "preset", fit: true, padding: 12},
+    wheelSensitivity: 0.25, minZoom: 0.05, maxZoom: 6, boxSelectionEnabled: false,
+    style: [
+      {selector: "node", style: {shape: "data(shape)", width: "data(w)", height: "data(h)", label: "data(label)",
+        "font-size": 9, "text-valign": "center", "text-halign": "center", "text-wrap": "ellipsis", "text-max-width": "data(w)",
+        "background-color": "data(fill)", "border-width": 1, "border-color": "data(border)", color: "#111", "z-index": 5}},
+      {selector: "node[kind = 'compound']", style: {width: 9, height: 9, "background-color": "#ffffff", "font-size": 7,
+        "text-valign": "bottom", "text-margin-y": 2, "text-max-width": 90, "text-wrap": "wrap"}},
+      {selector: "node[kind = 'map']", style: {"background-color": "#ffffff", "border-color": "#666", "font-size": 8, "text-wrap": "wrap"}},
+      {selector: "node[kind = 'title']", style: {"background-opacity": 0, "border-width": 0, "font-size": 15, "font-weight": "bold", "text-max-width": 400}},
+      {selector: "node[kind = 'label']", style: {"background-opacity": 0, "border-width": 0, "font-size": 10, "text-wrap": "wrap", color: "#444", "z-index": 1}},
+      {selector: "node[kind = 'shape']", style: {"background-opacity": 0, "border-width": 2, "border-color": "#b8b8b8", "text-valign": "top",
+        "font-size": 10, color: "#888", "z-index": 0, events: "no"}},
+      {selector: "node[kind = 'group']", style: {"background-opacity": 0.05, "background-color": "#888", "border-width": 1, "border-style": "dashed",
+        "border-color": "#999", padding: 2, label: "", "z-index": 2}},
+      {selector: "node[kind = 'point']", style: {width: 1, height: 1, opacity: 0, events: "no"}},
+      {selector: "node[kind = 'chemical']", style: {"font-size": 8, "text-wrap": "wrap"}},
+      {selector: "node[kind = 'reaction']", style: {width: 7, height: 7, "background-color": "#ffffff", "border-width": 1, label: ""}},
+      {selector: "node[kind = 'map']", style: {"border-width": 2}},
+      {selector: "node[!focus]", style: {opacity: 0.25}},
+      {selector: "node[?hit]", style: {"background-color": "#ff5a5a", "border-width": 2, "border-color": "#7a0000", "font-weight": "bold"}},
+      {selector: "node[score > 0]", style: {"background-color": "mapData(score, 0, 1, #f6d5d9, #d1495b)"}},
+      {selector: "node[score < 0]", style: {"background-color": "mapData(score, -1, 0, #3a6ea5, #d3e0ee)"}},
+      {selector: "edge", style: {width: 1.2, "curve-style": "straight", "line-color": "data(color)", "target-arrow-color": "data(color)",
+        "source-arrow-color": "data(color)", "target-arrow-shape": "data(arrow)", "source-arrow-shape": "data(tail)", "arrow-scale": 0.7,
+        "line-style": "data(line)", label: "data(label)", "font-size": 8, "text-background-color": "#fff", "text-background-opacity": 0.8,
+        "text-background-padding": 1, color: "#333", "z-index": 3}},
+      {selector: "edge[kind = 'maplink']", style: {"line-color": "#aaa", width: 0.8}},
+      {selector: "edge[kind = 'reaction']", style: {width: 1.4}},
+      {selector: ".faded", style: {opacity: 0.18}},
+    ]});
+  window._cyDrawing = cy;  // for tests and the browser console
+  sidebar(body.querySelector(".side"), setId, dg, vals, cy);
+  const hits = cy.nodes("[?hit]").length, boxes = cy.nodes("[kind = 'gene']").length;
+  const scored = cy.nodes("[score]").length;
+  const base_info = `${dg.name || d.id}: ${boxes} gene boxes · ${cy.edges().length} interactions` +
+    (QUERY.values ? ` · ${scored} boxes coloured by your scores · ${hits} contain leading-edge genes` : QUERY.genes.length ? ` · ${hits} boxes contain your genes` : "");
+  info.textContent = base_info;
+  cy.on("tap", "node[kind = 'gene']", ev => {
+    const n = ev.target; cy.elements().addClass("faded"); n.closedNeighborhood().removeClass("faded"); n.ancestors().removeClass("faded");
+    info.textContent = `${n.data("label")}: ${n.data("genes").join(", ") || "no gene of this organism mapped"}`;
+  });
+  cy.on("tap", ev => { if (ev.target === cy) { cy.elements().removeClass("faded"); info.textContent = base_info; } });
+  cy.on("dbltap", "node[kind = 'gene']", ev => { const g = ev.target.data("genes"); if (g.length) showGene(g[0]); });
+  body.querySelector(".fit").onclick = () => cy.fit(undefined, 12);
+  body.querySelector(".png").onclick = () => { const a = document.createElement("a"); a.href = cy.png({full: true, scale: 2, bg: "#ffffff"}); a.download = `${d.id}.png`; a.click(); };
+}
+
+// Network view (auto layout): controls, the Cytoscape canvas, legend, exports.
+function networkView(panel, id, name) {
+  const uid = "m" + Math.random().toString(36).slice(2, 8);
+  const base = `${BASE}/api/${org()}/map/${encodeURIComponent(id)}`;
+  let maxNodes = 150;  // large sets: draw the best-connected genes first (fast), more on request
+  const qs = () => new URLSearchParams({genes: highlightFor(id).slice(0, 5000).join(","), max: maxNodes, ...(panel.querySelector(".ppi").value ? {ppi: panel.querySelector(".ppi").value} : {})});
+  panel.innerHTML = `<div class="mapbar">
+      <select class="layout" title="Layout"><option value="dagre">Layered (cascade)</option><option value="cose">Force-directed</option><option value="concentric">Hubs in the centre</option><option value="circle">Circle</option></select>
+      <select class="ppi" title="Interaction evidence"><option value="">Pathway gene pairs</option><option value="string">+ STRING</option><option value="high">+ high-confidence physical PPIs</option><option value="medium">+ medium-confidence PPIs</option></select>
+      <label style="display:inline-flex;gap:4px;align-items:center;margin:0;color:var(--ink)"><input type="checkbox" class="onlyhits" style="width:auto">Only my genes and their neighbours</label>
+      <button class="fit">Fit</button>
+      <button class="more" style="display:none">Show more genes</button>
+      <button class="png">PNG</button>
+      <a class="sbml">SBML-qual</a> · <a class="sbgn">SBGN-ML</a> · <a class="cyjs">Cytoscape JSON</a>
+    </div>
+    <div class="cy" id="${uid}"></div>
+    <div class="mapinfo"></div>
+    <div class="legend">${Object.values(REL).map(([c, l]) => `<span><i style="background:${c}"></i>${l}</span>`).join("")}
+      <span><b style="background:var(--accent)"></b>your genes</span><span><b style="background:#c8d0d8"></b>other pathway genes · size = number of source databases</span>
+      ${QUERY.values ? `<span><b style="background:#d1495b"></b>up · <b style="background:#3a6ea5"></b>down (your scores)</span>` : ""}</div>`;
+  const info = panel.querySelector(".mapinfo");
+  const setLinks = () => {
+    panel.querySelector(".sbml").href = `${base}?${qs()}&format=sbml`;
+    panel.querySelector(".sbgn").href = `${base}?${qs()}&format=sbgn`;
+    panel.querySelector(".cyjs").href = `${base}?${qs()}&format=cyjs`;
+    panel.querySelector(".cyjs").download = `${id}.cyjs.json`;
+  };
+  let cy = null, autoPPI = false;
+  const draw = async () => {
+    if (!window.cytoscape) { info.textContent = "The map library could not load (offline?)."; return; }
+    if (window.cytoscapeDagre && !window._dagreOk) { try { cytoscape.use(window.cytoscapeDagre); } catch (e) {} window._dagreOk = true; }
+    setLinks();
+    info.textContent = "Drawing…";
+    let g = await fetch(`${base}?${qs()}`).then(r => r.json());
+    const nEdges = g.elements.filter(e => e.data.source).length;
+    if (!nEdges && !panel.querySelector(".ppi").value && !autoPPI) {
+      // no curated relations (GO / MSigDB sets): show high-confidence PPIs among the genes instead
+      autoPPI = true; panel.querySelector(".ppi").value = "high"; return draw();
+    }
+    if (panel.querySelector(".onlyhits").checked && QUERY.genes.length) {
+      const hits = new Set(g.elements.filter(e => !e.data.source && e.data.hit).map(e => e.data.id));
+      const keep = new Set(hits);
+      g.elements.forEach(e => { if (e.data.source && (hits.has(e.data.source) || hits.has(e.data.target))) { keep.add(e.data.source); keep.add(e.data.target); } });
+      g.elements = g.elements.filter(e => e.data.source ? keep.has(e.data.source) && keep.has(e.data.target) : keep.has(e.data.id));
+    }
+    const vals = QUERY.values ? Object.fromEntries(Object.entries(QUERY.values).map(([k, v]) => [k.toUpperCase(), v])) : null;
+    const maxAbs = vals ? Math.max(1e-9, ...Object.values(vals).map(Math.abs)) : 1;
+    g.elements.forEach(e => { if (!e.data.source && vals && vals[e.data.id.toUpperCase()] !== undefined) e.data.score = vals[e.data.id.toUpperCase()] / maxAbs; });
+    const css = getComputedStyle(document.documentElement);
+    const ink = css.getPropertyValue("--ink").trim(), accent = css.getPropertyValue("--accent").trim(), line = css.getPropertyValue("--line").trim();
+    const directed = g.elements.some(e => e.data.directed);
+    panel.querySelector(".more").style.display = g.truncated && maxNodes < 600 ? "" : "none";
+    const nNodes = g.elements.filter(e => !e.data.source).length;
+    let layout = panel.querySelector(".layout").value;
+    if (layout === "dagre" && (!window._dagreOk || !directed)) layout = "cose";
+    if (cy) cy.destroy();
+    cy = cytoscape({container: document.getElementById(uid), elements: g.elements, wheelSensitivity: 0.25, minZoom: 0.05,
+      style: [
+        {selector: "node", style: {label: "data(label)", "font-size": 10, color: ink, "text-valign": "bottom", "text-margin-y": 3,
+          width: "mapData(n_sources, 1, 4, 14, 26)", height: "mapData(n_sources, 1, 4, 14, 26)", "background-color": "#c8d0d8",
+          "border-width": 1, "border-color": line}},
+        {selector: "node[?hit]", style: {"background-color": accent, "border-width": 2, "border-color": ink, "font-weight": "bold"}},
+        {selector: "node[score > 0]", style: {"background-color": "mapData(score, 0, 1, #f3d0d4, #d1495b)"}},
+        {selector: "node[score < 0]", style: {"background-color": "mapData(score, -1, 0, #3a6ea5, #cfdcec)"}},
+        {selector: "edge", style: {width: 1.6, "curve-style": "bezier", opacity: 0.9,
+          "line-color": e => (REL[e.data("relation")] || REL.PPrel)[0], "target-arrow-color": e => (REL[e.data("relation")] || REL.PPrel)[0]}},
+        {selector: "edge[?directed]", style: {"target-arrow-shape": "triangle", "arrow-scale": 0.8}},
+        {selector: "edge[kind = 'ppi']", style: {"line-style": "dashed", width: 1, opacity: 0.55}},
+        {selector: "edge[relation = 'GPrel']", style: {"line-style": "dotted", width: 2}},
+        {selector: ".faded", style: {opacity: 0.15}},
+        {selector: "node:selected", style: {"border-width": 3, "border-color": accent}},
+      ],
+      layout: layout === "dagre" ? {name: "dagre", rankDir: "TB", nodeSep: 22, rankSep: 46, edgeSep: 8, animate: false}
+            : layout === "concentric" ? {name: "concentric", concentric: n => n.degree(), levelWidth: () => 2, animate: false}
+            // force-directed cost grows ~n^2: fewer iterations for big graphs keeps the page responsive
+            : {name: layout, animate: false, nodeRepulsion: () => 12000, idealEdgeLength: () => 70,
+               numIter: nNodes > 300 ? 300 : nNodes > 150 ? 600 : 1000, randomize: true}});
+    if (layout === "dagre") {  // hub-and-spoke pathways make a layered layout one very wide row: fall back
+      const bb = cy.elements().boundingBox();
+      if (bb.w > 3 * Math.max(bb.h, 1) && cy.nodes().length > 25) {
+        cy.layout({name: "cose", animate: false, nodeRepulsion: () => 12000, idealEdgeLength: () => 70}).run();
+        panel.querySelector(".layout").value = "cose";
+      }
+    }
+    const nodes = cy.nodes().length, edges = cy.edges().length, hits = cy.nodes("[?hit]").length;
+    const base_info = `${nodes} genes${g.truncated ? ` (the ${nodes} best-connected of ${g.n_genes}${maxNodes < 600 ? "; Show more genes draws up to 600" : ""})` : ""} · ${edges} relations` +
+      (QUERY.genes.length ? ` · ${hits} of your genes in this pathway` : "") + (autoPPI && panel.querySelector(".ppi").value === "high" ? " · no curated relations in this set, showing high-confidence PPIs" : "") +
+      " · click a gene to trace its neighbours, double-click to open the gene page";
+    info.textContent = base_info;
+    cy.on("tap", "node", ev => {
+      const n = ev.target, nb = n.closedNeighborhood();
+      cy.elements().addClass("faded"); nb.removeClass("faded");
+      const srcs = n.data("sources").join(", "), sc = n.data("score");
+      info.textContent = `${n.id()}: in this pathway per ${srcs}${sc !== undefined ? ` · your score ${(QUERY.values[n.id()] ?? sc).toString().slice(0, 7)}` : ""} · ${n.degree()} relations`;
+    });
+    cy.on("tap", ev => { if (ev.target === cy) { cy.elements().removeClass("faded"); info.textContent = base_info; } });
+    cy.on("dbltap", "node", ev => showGene(ev.target.id()));
+  };
+  panel.querySelector(".layout").onchange = draw;
+  panel.querySelector(".ppi").onchange = () => { autoPPI = true; draw(); };
+  panel.querySelector(".onlyhits").onchange = draw;
+  panel.querySelector(".fit").onclick = () => cy && cy.fit(undefined, 20);
+  panel.querySelector(".more").onclick = () => { maxNodes = 600; draw(); };
+  panel.querySelector(".png").onclick = () => {
+    if (!cy) return;
+    const a = document.createElement("a");
+    a.href = cy.png({full: true, scale: 2, bg: getComputedStyle(document.body).backgroundColor});
+    a.download = `${id}.png`; a.click();
+  };
+  draw();
+}
 async function loadOrganisms() {
   ORGS = await fetch(`${BASE}/api/organisms`).then(r => r.json());
   // curated organisms first; thousands of KEGG organisms are reachable through the search box
@@ -164,13 +459,16 @@ const cols = () => [...document.querySelectorAll("#cols input:checked")].map(i =
 $("#run").onclick = async () => {
   const text = $("#input").value.trim();
   if (!text) return;
+  $("#resultMap").classList.add("hidden");
   $("#status").textContent = "Running…";
   let body, url = `${BASE}/api/${org()}/enrich/${mode}`;
   if (mode === "gsea") {
     const ranking = {};
     text.split(/\n/).forEach(l => { const f = l.split(/[\t,; ]+/); const v = parseFloat(f[1]); if (f[0] && !isNaN(v)) ranking[f[0]] = v; });
     body = {ranking, collections: cols()};
+    QUERY = {genes: Object.keys(ranking), values: ranking};
   } else {
+    QUERY = {genes: text.split(/[\s,;]+/).filter(Boolean), values: null};
     body = {genes: text.split(/[\s,;]+/).filter(Boolean), collections: mode === "pairs" ? ["pathway"] : cols(), with_ppi: $("#withPPI").checked, ppi_tier: $("#tier").value};
   }
   const res = await fetch(url, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
@@ -184,18 +482,20 @@ function render(rows) {
   const t = $("#results");
   if (!rows.length) { t.innerHTML = "<tr><td>No sets with overlap.</td></tr>"; return; }
   if (mode === "gsea") {
+    rows.forEach(r => { LEADING[r.id] = r.leading_edge; });
     t.innerHTML = "<tr><th>Set</th><th>Size</th><th>NES</th><th>p</th><th>FDR</th><th>Leading edge</th></tr>" + rows.slice(0, 200).map(r =>
       `<tr><td>${link(r)}${theme(r)}</td><td class="num">${r.set_size}</td><td class="num">${r.nes.toFixed(2)}</td><td class="num">${fmt(r.p)}</td><td class="num">${fmt(r.fdr)}</td><td class="genes">${esc(r.leading_edge.slice(0, 15).join(" "))}</td></tr>`).join("");
   } else if (mode === "pairs") {
     t.innerHTML = "<tr><th>Pathway</th><th>Pairs hit</th><th>Expected</th><th>p</th><th>FDR</th><th>Relations</th></tr>" + rows.slice(0, 200).map(r =>
       `<tr><td>${link(r)}</td><td class="num">${r.overlap_pairs}/${r.set_pairs}</td><td class="num">${r.expected}</td><td class="num">${fmt(r.p)}</td><td class="num">${fmt(r.fdr)}</td><td class="genes">${esc(r.pairs.slice(0, 10).join(" "))}</td></tr>`).join("");
   } else {
-    t.innerHTML = "<tr><th>Set</th><th>Overlap</th><th>Fold</th><th>p</th><th>FDR</th><th>Consensus</th><th>Genes</th></tr>" + rows.slice(0, 200).map(r =>
-      `<tr><td>${link(r)}${theme(r)}</td><td class="num">${r.overlap}/${r.set_size}</td><td class="num">${r.fold}</td><td class="num">${fmt(r.p)}</td><td class="num">${fmt(r.fdr)}</td><td class="num">${r.consensus == null ? "" : Math.round(100 * r.consensus) + "%"}</td><td class="genes">${esc(r.genes.join(" "))}</td></tr>`).join("");
+    t.innerHTML = "<tr><th>Set</th><th>Overlap</th><th>Fold</th><th>p</th><th>FDR</th><th>Genes</th></tr>" + rows.slice(0, 200).map(r =>
+      `<tr><td>${link(r)}${theme(r)}</td><td class="num">${r.overlap}/${r.set_size}</td><td class="num">${r.fold}</td><td class="num">${fmt(r.p)}</td><td class="num">${fmt(r.fdr)}</td><td class="genes">${esc(r.genes.join(" "))}</td></tr>`).join("");
   }
 }
 const theme = r => r.theme ? `<div class="theme">theme ${r.theme}${r.theme_leader !== r.name ? " · with " + esc(r.theme_leader) : ""}</div>` : "";
-const link = r => `<a onclick="showSet('${esc(r.id)}')">${esc(r.name)}</a><div>${(r.sources || "").split(",").filter(Boolean).map(s => `<span class="chip">${esc(s)}</span>`).join("")}<span class="chip">${esc(r.collection)}</span></div>`;
+const libLabel = c => c === "pathway" ? "IntPath pathway" : c.startsWith("GO:") ? c.replace(":", " ") : c.startsWith("msigdb:") ? "MSigDB " + c.slice(7) : c;
+const link = r => `<a onclick="showSet('${esc(r.id)}')">${esc(r.name)}</a> <button class="mapbtn" title="Draw this pathway with your genes highlighted" onclick="openResultMap('${esc(r.id)}', '${esc(r.name).replace(/'/g, "&#39;")}')">Map</button><div><span class="chip">${esc(libLabel(r.collection))}</span></div>`;
 
 $("#search").onclick = async () => {
   const term = $("#q").value.trim();
@@ -203,8 +503,8 @@ $("#search").onclick = async () => {
     fetch(`${BASE}/api/${org()}/search?q=${encodeURIComponent(term)}`).then(r => r.json()),
     fetch(`${BASE}/api/${org()}/gene/${encodeURIComponent(term)}?limit=1`).then(r => r.ok ? r.json() : null)]);
   $("#detail").innerHTML = g ? `<p>Gene <a onclick="showGene('${esc(g.gene)}')"><b>${esc(g.gene)}</b></a>: ${g.sets.length} gene sets — open the gene page for PPI partners.</p>` : "";
-  $("#browse").innerHTML = "<tr><th>Name</th><th>Library</th><th>Sources</th><th>Genes</th></tr>" + r.map(s =>
-    `<tr><td><a onclick="showSet('${esc(s.id)}')">${esc(s.name)}</a></td><td>${esc(s.collection)}</td><td>${s.sources.map(x => `<span class="chip">${esc(x)}</span>`).join("")}</td><td class="num">${s.n_genes}</td></tr>`).join("");
+  $("#browse").innerHTML = "<tr><th>Name</th><th>Library</th><th>Genes</th></tr>" + r.map(s =>
+    `<tr><td><a onclick="showSet('${esc(s.id)}')">${esc(s.name)}</a></td><td>${esc(libLabel(s.collection))}</td><td class="num">${s.n_genes}</td></tr>`).join("");
 };
 $("#q").onkeydown = e => { if (e.key === "Enter") $("#search").click(); };
 
@@ -213,24 +513,28 @@ async function showSet(id) {
   const s = await fetch(`${BASE}/api/${org()}/set/${encodeURIComponent(id)}`).then(r => r.json());
   const genes = Object.entries(s.genes);
   $("#detail").innerHTML = `<h3>${esc(s.name)} <span class="chip">${esc(s.id)}</span></h3>
-    <p><b>Merged from:</b> ${s.members.map(m => `<span class="chip">${esc(m.source)}: ${esc(m.pathway)}</span>`).join(" ")}</p>
-    ${s.links.length ? `<p><b>Related:</b> ${s.links.map(l => `<a onclick="showSet('${esc(l.id)}')">${esc(l.name)}</a> <span class="chip">${esc(l.collection)}</span>`).join(" · ")}</p>` : ""}
-    <p><b>${genes.length} genes</b> (sources supporting each membership)</p>
-    <div class="genes" style="max-width:none">${genes.map(([g, src]) => `${esc(g)}<sup>${src.length}</sup>`).join(" ")}</div>
-    <p><b>${s.pairs.length} gene pairs</b></p>
-    <div class="tablewrap"><table><tr><th>Gene A</th><th>Gene B</th><th>Relation</th><th>Sources</th></tr>${s.pairs.slice(0, 300).map(p => `<tr><td>${esc(p.a)}</td><td>${esc(p.b)}</td><td>${p.relations.join(", ")}</td><td>${p.sources.join(", ")}</td></tr>`).join("")}</table></div>`;
+    <div class="mappanel" id="setMap"></div>
+    ${s.collection === "pathway" ? `<p><b>Merged from ${s.members.length} pathway${s.members.length === 1 ? "" : "s"}:</b> ${s.members.map(m => esc(m.name || m.pathway)).join(" · ")}</p>` : `<p><span class="chip">${esc(libLabel(s.collection))}</span></p>`}
+    ${s.links.length ? `<p><b>Related:</b> ${s.links.map(l => `<a onclick="showSet('${esc(l.id)}')">${esc(l.name)}</a>`).join(" · ")}</p>` : ""}
+    <p><b>${genes.length} genes</b></p>
+    <div class="genes" style="max-width:none">${genes.map(([g]) => esc(g)).join(" ")}</div>
+    ${s.pairs.length ? `<p><b>${s.pairs.length} gene pairs</b></p>
+    <div class="tablewrap"><table><tr><th>Gene A</th><th>Gene B</th><th>Relation</th></tr>${s.pairs.slice(0, 300).map(p => `<tr><td>${esc(p.a)}</td><td>${esc(p.b)}</td><td>${p.relations.join(", ")}</td></tr>`).join("")}</table></div>` : ""}`;
+  mapPanel($("#setMap"), id, s.name, false);
 }
 
 async function showGene(sym) {
   const g = await fetch(`${BASE}/api/${org()}/gene/${encodeURIComponent(sym)}`).then(r => r.json());
   $("#detail").innerHTML = `<h3>${esc(g.gene)}</h3>
     <p><b>${g.sets.length} gene sets</b></p>
-    <div class="tablewrap"><table><tr><th>Set</th><th>Library</th><th>Support</th></tr>${g.sets.slice(0, 400).map(s => `<tr><td><a onclick="showSet('${esc(s.id)}')">${esc(s.name)}</a></td><td>${esc(s.collection)}</td><td>${s.sources.map(x => `<span class="chip">${esc(x)}</span>`).join("")}</td></tr>`).join("")}</table></div>
-    <p><b>${g.ppi_partners.length} PPI partners</b> (merged STRING, BioGRID, IntAct, MINT, HuRI)</p>
-    <div class="tablewrap"><table><tr><th>Partner</th><th>Sources</th><th>Publications</th><th>STRING</th><th>Tier</th><th>In a curated pathway</th></tr>${g.ppi_partners.map(p => `<tr><td><a onclick="showGene('${esc(p.gene)}')">${esc(p.gene)}</a></td><td>${p.sources.map(x => `<span class="chip">${esc(x)}</span>`).join("")}</td><td class="num">${p.n_pmids}</td><td class="num">${p.string_score || ""}</td><td>${esc(p.tier)}</td><td>${p.pathway_supported ? "yes" : ""}</td></tr>`).join("")}</table></div>`;
+    <div class="tablewrap"><table><tr><th>Set</th><th>Library</th></tr>${g.sets.slice(0, 400).map(s => `<tr><td><a onclick="showSet('${esc(s.id)}')">${esc(s.name)}</a></td><td>${esc(libLabel(s.collection))}</td></tr>`).join("")}</table></div>
+    <p><b>${g.ppi_partners.length} physical PPI partners</b></p>
+    <div class="tablewrap"><table><tr><th>Partner</th><th>Publications</th><th>Confidence</th><th>Also a pathway gene pair</th></tr>${g.ppi_partners.map(p => `<tr><td><a onclick="showGene('${esc(p.gene)}')">${esc(p.gene)}</a></td><td class="num">${p.n_pmids}</td><td>${esc(p.tier)}</td><td>${p.pathway_supported ? "yes" : ""}</td></tr>`).join("")}</table></div>
+    ${(g.string_partners || []).length ? `<p><b>${g.string_partners.length} STRING partners</b></p>
+    <div class="tablewrap"><table><tr><th>Partner</th><th>STRING score</th></tr>${g.string_partners.map(p => `<tr><td><a onclick="showGene('${esc(p.gene)}')">${esc(p.gene)}</a></td><td class="num">${p.string_score}</td></tr>`).join("")}</table></div>` : ""}`;
 }
 
-const COLLECTION_LABELS = {"pathway": "Pathways (integrated)", "GO:BP": "GO biological process", "GO:MF": "GO molecular function", "GO:CC": "GO cellular component", "msigdb:H": "MSigDB Hallmarks"};
+const COLLECTION_LABELS = {"pathway": "IntPath pathways", "GO:BP": "GO biological process", "GO:MF": "GO molecular function", "GO:CC": "GO cellular component", "msigdb:H": "MSigDB Hallmarks"};
 const DEFAULT_ON = new Set(["pathway", "GO:BP", "msigdb:H"]);
 async function loadCollections() {
   const rows = await fetch(`${BASE}/api/${org()}/collections`).then(r => r.ok ? r.json() : []);
@@ -252,16 +556,22 @@ async function loadStats() {
   const files = ["intpath.gmt", "intpath_genesets.tsv", "intpath_set_genes.tsv", "intpath_set_genepairs.tsv", "intpath_set_members.tsv", "intpath_ppi.tsv", "related_pathways.tsv"];
   $("#downloads").innerHTML = "<b>Downloads:</b> " + files.map(f => `<a href="/download/${org()}/${f}">${f}</a>`).join(" · ");
 }
-$("#tierNote").innerHTML = BASE
-  ? `<b>Licensed section</b>, signed-in users only. Adds KEGG, BioCyc (old IntPath archive, 2012) and MSigDB BioCarta / KEGG_MEDICUS. Each result names its source database; use is subject to those providers' terms (KEGG: academic use by academic users). Analysis only; downloads are disabled. <a href="/">Back to the public site</a>`
-  : `Public open-licence data (Reactome, WikiPathways, GO, MSigDB, merged PPIs). Signed-in users can also <a href="/licensed/">analyse with KEGG, BioCyc and BioCarta</a>.`;
-if (BASE) { const d = document.getElementById("downloads"); if (d) d.style.display = "none"; }
 $("#org").onchange = () => {
   const v = $("#org").value.trim(), code = (v.match(/\[([^\]]+)\]$/) || [])[1];
   const o = ORGS.find(x => x.key === code) || ORGS.find(x => x.name.toLowerCase() === v.toLowerCase() || x.kegg === v || x.taxid === v);
   if (!o) { $("#orgHint").textContent = "No IntPathV2 release for that organism yet."; return; }
   $("#orgHint").textContent = ""; setOrg(o); loadCollections(); if (!$("#tab-about").classList.contains("hidden")) loadStats(); };
-loadOrganisms().then(loadCollections);
+// Deep links: #org=sapiens&set=<set id>&genes=TP53,MDM2 opens that pathway's map with the genes highlighted.
+function openFromHash() {
+  const h = new URLSearchParams(location.hash.slice(1));
+  if (!h.get("set")) return;
+  const o = ORGS.find(x => x.key === h.get("org"));
+  if (o) setOrg(o);
+  QUERY = {genes: (h.get("genes") || "").split(",").filter(Boolean), values: null};
+  showSet(h.get("set"));
+}
+window.addEventListener("hashchange", openFromHash);
+loadOrganisms().then(loadCollections).then(openFromHash);
 </script>
 </body>
 </html>

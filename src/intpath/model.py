@@ -49,6 +49,8 @@ class GeneSet:
     members: list[tuple[str, str]] = field(default_factory=list)  # (source, original name or id)
     pairs: dict[tuple[str, str], dict[str, set[str]]] = field(default_factory=dict)  # pair -> {"rel":..., "src":...}
     links: list[str] = field(default_factory=list)  # related set ids (e.g. pathway <-> GO cross-links)
+    member_names: dict[str, str] = field(default_factory=dict)  # member id -> original pathway / term name
+    member_desc: dict[str, str] = field(default_factory=dict)  # member id -> description (the pathway's meaning)
 
     @property
     def sources(self) -> list[str]:

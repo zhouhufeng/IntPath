@@ -72,6 +72,7 @@ def build(
     with_msigdb: bool = True,
     legacy_data_root: str | Path | None = "Data",
     exports: bool = True,
+    merge_method: str = "intpath",
 ) -> dict:
     raw, out = Path(raw_root) / org.key, Path(out_root) / org.key
     out.mkdir(parents=True, exist_ok=True)
@@ -112,12 +113,36 @@ def build(
             pathways += pws
 
     log("merging related pathways (IntPath name alignment + full unification)")
-    sets, matches = merge_pathways(pathways, legacy=False, organism=org.key)
+    sets, matches = merge_pathways(pathways, legacy=False, organism=org.key, method=merge_method)
+    stats["merge_method"] = merge_method
+    if merge_method == "intpath":
+        from .review import summary, write_log
+
+        stats["merge_review"] = summary(matches)
+        write_log(matches, out / "merge_review.tsv")
+        log(f"  merge review: {stats['merge_review']}")
     stats["pathways"] = set_stats(sets)
-    stats["related_pathway_pairs"] = len(matches)
+    # the meaning of every member pathway travels with its merged IntPath pathway
+    from . import meaning
+
+    desc: dict[str, str] = {}
+    for label, fn in (("Reactome", lambda: meaning.reactome(raw)), ("WikiPathways", lambda: meaning.wikipathways(raw)),
+                      ("KEGG", lambda: meaning.kegg(Path(raw_root) / "shared",
+                                                    [sid for s in sets for src, sid in s.members if src == "KEGG"]))):
+        if any(src == label for s in sets for src, _ in s.members):
+            try:
+                desc.update(fn())
+            except Exception as exc:
+                log(f"  {label} descriptions unavailable: {exc}")
+    for s in sets:
+        for _src, sid in s.members:
+            if sid in desc:
+                s.member_desc[sid] = desc[sid]
+    stats["pathways"]["with_description"] = sum(1 for s in sets if s.member_desc)
+    stats["related_pathway_pairs"] = sum(1 for m in matches if m.decision == "accept")
     with open(out / "related_pathways.tsv", "w") as fh:
         fh.write("source_a\tpathway_a\tsource_b\tpathway_b\talign_score\talign_ratio\tjaccard\n")
-        for m in matches:
+        for m in (m for m in matches if m.decision == "accept"):
             ov = "" if m.overlap is None else f"{m.overlap:.3f}"
             fh.write(f"{m.a[0]}\t{m.a[1]}\t{m.b[0]}\t{m.b[1]}\t{m.score}\t{m.ratio:.4f}\t{ov}\n")
     log(f"  {stats['pathways']}")
@@ -128,6 +153,11 @@ def build(
         ann = golib.parse_gaf(files["go_gaf"], terms, mapper)
         full = golib.propagate(ann, terms)
         go_sets = golib.build_go_sets(terms, full)
+        from .meaning import go_definitions
+
+        defs = go_definitions(files["go_obo"])
+        for gs in go_sets:
+            gs.member_desc = {t: defs[t] for _src, t in gs.members if t in defs}
         stats["go"] = {
             "annotated_terms_propagated": len(full),
             "go_sets": len(go_sets),
@@ -147,14 +177,19 @@ def build(
             log(f"  MSigDB {msig.version}: {len(msig.sets)} sets, {len(msig.equivalents)} equivalence links")
             sets += msig.sets
 
-    net = None
+    net = net_string = None
     if with_ppi:
-        log("integrating PPIs (STRING, BioGRID, IntAct/MINT, HuRI)")
+        # physical PPI: BioGRID + IntAct/MINT + HuRI merged; STRING kept as its own network
+        log("integrating physical PPIs (BioGRID, IntAct/MINT, HuRI); STRING separately")
         shared = Path(raw_root) / "shared"
         feeds = []
         if org.string_taxid:
             links, info = sources.fetch_string(raw, org)
-            feeds.append(("STRING", ppilib.parse_string(links, info, string_min_score)))
+            net_string, rep_s = ppilib.integrate([("STRING", ppilib.parse_string(links, info, string_min_score))], mapper)
+            net_string.overlay_pathways([s for s in sets if s.collection == "pathway"])
+            net_string.write(out / "intpath_string.tsv")
+            stats["string"] = {"per_source": rep_s, **net_string.summary()}
+            log(f"  STRING: {net_string.summary()['edges']} edges")
         for name, feed in sources.PPI_FEEDS.items():
             if name == "HuRI" and org.key != "sapiens":
                 continue
@@ -183,16 +218,20 @@ def build(
         write_gmt(sets, out / "intpath.gmt")
         stats["files"] = {"gmt": str(out / "intpath.gmt")}
     release_genes = {g for s in sets for g in s.genes}
-    if net is not None:
-        release_genes |= {g for e in net.edges for g in e}
+    for n in (net, net_string):
+        if n is not None:
+            release_genes |= {g for e in n.edges for g in e}
     aliases = mapper.alias_table(release_genes)
     stats["aliases"] = len(aliases)
     stats["mapping"] = dict(mapper.stats)
     log("writing release database")
     meta = {"organism_key": org.key, "organism": org.name, "taxid": org.taxid, "built": stats["built"],
             "tier": stats["tier"], "versions": stats["versions"], "stats": {k: v for k, v in stats.items() if k != "files"}}
-    write_db(out / "intpath.sqlite", sets, meta=meta, aliases=aliases, gene_ids=mapper.entrez, ppi=net,
+    write_db(out / "intpath.sqlite", sets, meta=meta, aliases=aliases, gene_ids=mapper.entrez, ppi=net, string=net_string,
              matches=matches, msigdb_equivalents=msig.equivalents if msig else None)
+    from .diagrams import add_diagrams
+
+    stats["diagrams"] = add_diagrams(out / "intpath.sqlite", raw, org, lambda k: mapper.map(k.split(":", 1)[-1]))
     (out / "stats.json").write_text(json.dumps(stats, indent=2))
     log(f"release written to {out}")
     return stats
@@ -277,19 +316,32 @@ def build_many(
         orgs = orgs[:limit]
     log(f"{len(orgs)} organisms to build ({'open' if public else 'full'} tier)")
 
-    ready: list[Organism] = []
-    for i, org in enumerate(orgs, 1):
+    from concurrent.futures import ThreadPoolExecutor
+
+    def prefetch(org: Organism) -> Organism | None:
         raw = raw_root / org.key
         try:
             sources.gene_namespace(raw, org)
             if not public:
                 sources.kegg_get(f"list/pathway/{org.kegg}", raw / "kegg" / org.kegg / "list_pathway.txt")
                 sources.kegg_get(f"link/{org.kegg}/pathway", raw / "kegg" / org.kegg / "link_pathway.txt")
-            ready.append(org)
+            return org
         except Exception as exc:
             log(f"  prefetch failed for {org.key}: {exc}")
-        if i % 200 == 0:
-            log(f"  prefetched {i}/{len(orgs)}")
+            return None
+
+    # the NCBI group files are split by the first organism of each group; do that serially
+    for group in sorted({o.gene_info.split("/")[0] for o in orgs if o.gene_info_is_shared}):
+        from .catalog import gene_info_for_taxid
+
+        gene_info_for_taxid(raw_root / "shared", group, "0")
+    ready: list[Organism] = []
+    with ThreadPoolExecutor(max_workers=3) as pool:  # kegg_get keeps KEGG within its rate limit
+        for i, org in enumerate(pool.map(prefetch, orgs), 1):
+            if org is not None:
+                ready.append(org)
+            if i % 250 == 0:
+                log(f"  prefetched {i}/{len(orgs)}")
 
     results: dict[str, str] = {}
     with ProcessPoolExecutor(max_workers=workers) as pool:

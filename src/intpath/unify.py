@@ -47,11 +47,17 @@ def merge_pathways(
     extra_mismatches: Iterable[tuple[str, str]] = (),
     no_within: Iterable[str] = NO_WITHIN_SOURCE_MERGE,
     organism: str | None = None,
+    method: str = "guarded",
 ) -> tuple[list[GeneSet], list[Match]]:
     """Group related pathways by name and fully unify their genes and gene pairs.
 
     legacy=True  -> exact old IntPath rule set of ``organism`` (intpath.curation) on raw
-                    names, no gene-overlap guard.
+                    names, no gene-overlap guard (reproduces the old IntPath releases).
+    method="intpath" (with legacy=False) -> the published IntPath algorithm on the new
+                    data: cleaned names, curated mismatch list, comparisons between and
+                    within every source, union-find, full unification. No gene-overlap,
+                    entity or hierarchy guards: related names merge as in the paper,
+                    and false merges are fixed by curation (the mismatch list).
     legacy=False -> names cleaned; extended mismatch list; entity guard; no
                     within-source matching for hierarchical sources (Reactome);
                     and a name match is kept only if the gene sets have Jaccard
@@ -76,26 +82,34 @@ def merge_pathways(
     display: Callable[[str], str] | None = None
     overlap = None
     within = None
+    published = method == "intpath"
     if not legacy:
         mismatches += INTPATHV2_MISMATCHES
         display = clean_name
-        overlap = lambda a, b: jaccard(by_key[a].genes, by_key[b].genes)  # noqa: E731
-        within = [s for s in names if s not in set(no_within)]
+        if not published:
+            overlap = lambda a, b: jaccard(by_key[a].genes, by_key[b].genes)  # noqa: E731
+            within = [s for s in names if s not in set(no_within)]
 
     matches = find_related_pairs(
         names,
         mismatches=mismatches,
-        entity_guard=not legacy,
+        entity_guard=not legacy and not published,
         within_sources=within,
         display=display,
         overlap=overlap,
         min_overlap=min_jaccard,
     )
+    if published and not legacy:  # IntPathV2: the reviewed decisions replace the 2012 manual review
+        from .review import name_review_matches, review
+
+        review(matches)
+        matches += name_review_matches(names, matches)
+    accepted = [m for m in matches if m.decision == "accept"]
     groups = group_related(
-        matches, legacy=legacy, display=display, rules=rules, merge_same_name=legacy and organism == "musculus"
+        accepted, legacy=legacy, display=display, rules=rules, merge_same_name=legacy and organism == "musculus"
     )
 
-    if not legacy:
+    if not legacy and not published:
         groups = split_hierarchy(groups, by_key)
 
     grouped = {k for g in groups for k in g.members}
@@ -178,6 +192,7 @@ def unify_group(group: PathwayGroup, by_key: dict[tuple[str, str], SourcePathway
     gs = GeneSet(id=stable_id("IP", members), name=group.name.strip(), collection="pathway", members=members)
     for key in group.members:
         p = by_key[key]
+        gs.member_names[p.source_id or p.name] = clean_name(p.name)
         for g in p.genes:
             gs.genes.setdefault(g, set()).add(p.source)
         for pr, rels in p.pairs.items():

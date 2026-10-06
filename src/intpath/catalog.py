@@ -122,7 +122,9 @@ def build_catalog(shared: Path) -> list[dict]:
 
 def organisms_from_catalog(rows: list[dict]) -> list[Organism]:
     """Organism entries for catalog rows not already in the curated registry (matched by KEGG code)."""
-    known = {o.kegg for o in ORGANISMS.values() if o.kegg}
+    from .organisms import CURATED
+
+    known = {ORGANISMS[k].kegg for k in CURATED if ORGANISMS[k].kegg}
     out = []
     for r in rows:
         if r["kegg"] in known or not r["taxid"]:

@@ -123,6 +123,20 @@ def fetch_common(raw: Path, org: Organism) -> dict[str, Path]:
     return out
 
 
+MIN_NCBI_GENES = 500  # fewer NCBI records than this = a stub, not a gene list
+
+
+def _count_lines(path: Path, stop: int = MIN_NCBI_GENES) -> int:
+    """Lines in a (gz) text file, counting no further than ``stop``."""
+    n = 0
+    with open_text(path) as fh:
+        for _ in fh:
+            n += 1
+            if n >= stop:
+                break
+    return n
+
+
 def gene_namespace(raw: Path, org: Organism) -> Path:
     """The organism's gene list: NCBI gene_info, else (most prokaryotes) KEGG's own gene list.
 
@@ -136,8 +150,9 @@ def gene_namespace(raw: Path, org: Organism) -> Path:
 
     group = org.gene_info.split("/")[0]
     split = gene_info_for_taxid(raw.parent / "shared", group, org.taxid)
-    if split is not None:
+    if split is not None and _count_lines(split) >= MIN_NCBI_GENES:
         return split
+    # NCBI Gene keeps only stub records for most prokaryotes: use KEGG's gene list
     if not org.kegg:
         raise FileNotFoundError(f"no gene list for {org.name} (taxid {org.taxid})")
     return kegg_get(f"list/{org.kegg}", raw / "kegg" / org.kegg / "kegg_genes.tsv")

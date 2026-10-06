@@ -13,3 +13,17 @@ Data/intpathv2/release*/*/intpath.sqlite*
 Data/intpathv2/*.log
 Data/hufeng-intpathv2-1ced8ff49207/
 Data/hufeng-intpathv2-1ced8ff49207.zip
+# catalog organisms (all KEGG genomes): thousands of release folders, rebuilt, never versioned
+Data/intpathv2/release*/*
+!Data/intpathv2/release*/sapiens/
+!Data/intpathv2/release*/musculus/
+!Data/intpathv2/release*/cerevisiae/
+!Data/intpathv2/release*/tuberculosis/
+Data/intpathv2/release*/*/build.log
+Data/intpathv2/release*/*/kgml/
+# unified IntPathV2 databases: large tables rebuilt; review logs and stats versioned
+Data/intpathv2/db/*/intpath_*.tsv
+Data/intpathv2/db/*/intpath.gmt
+Data/intpathv2/db/*/intpath.sqlite*
+Data/intpathv2/db/*/kgml/
+Data/intpathv2/db/*/build.log

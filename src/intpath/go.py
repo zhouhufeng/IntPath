@@ -192,6 +192,7 @@ def build_go_sets(
                     collection=NAMESPACE[terms[rep].namespace],
                     genes={g: {"GO:" + ",".join(sorted(ev))} for g, ev in genes.items()},
                     members=[("GO", t) for t in sorted(grp)],
+                    member_names={t: terms[t].name for t in grp},
                 )
             )
     return sets

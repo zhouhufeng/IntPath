@@ -170,8 +170,8 @@ def parse_biogrid_tab3(
         stem = "-" + "_".join(organism.split()[:2])  # e.g. -Saccharomyces_cerevisiae(_S288c)-
         with zipfile.ZipFile(path) as zf:
             members = [m for m in zf.namelist() if stem in m]
-            if not members:
-                raise FileNotFoundError(f"no BioGRID member for {organism!r} in {path}")
+            if not members:  # BioGRID covers ~70 organisms; elsewhere it is simply empty
+                return
             with io.TextIOWrapper(zf.open(members[0]), encoding="utf-8", errors="replace") as fh:
                 yield from _biogrid_lines(fh, physical_only, taxid)
         return

@@ -15,6 +15,8 @@ REST API
     GET  /api/{org}/search?q=...               sets by name, id or gene
     GET  /api/{org}/set/{set_id}               genes (+sources), members, gene pairs, links, MSigDB equivalents
     GET  /api/{org}/gene/{symbol}              sets containing the gene, PPI partners with evidence
+    GET  /api/{org}/map/{set_id}               pathway map: ?format=cyjs|sbml|sbgn &ppi=high|medium|low
+                                               &genes=<your list> (highlighted)
     POST /api/{org}/enrich/ora                 {"genes": [...], "background": [...]?, "collections": [...]?}
     POST /api/{org}/enrich/pairs               {"genes": [...], "with_ppi": true, "ppi_tier": "high"}
     POST /api/{org}/enrich/gsea                {"ranking": {"GENE": score}, "nperm": 1000}
@@ -31,15 +33,16 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import threading
 from functools import lru_cache
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from pydantic import BaseModel, Field
 
-from intpath import __version__, enrich
+from intpath import __version__, diagrams, enrich, maps, sources
 from intpath import organisms as orglib
 from intpath.library import Library, load_library
 
@@ -57,7 +60,7 @@ class GeneListRequest(BaseModel):
     max_size: int = Field(2000, le=5000)
     alpha: float = Field(0.05, gt=0, le=1)
     with_ppi: bool = False
-    ppi_tier: str = Field("high", pattern="^(high|medium|low)$")
+    ppi_tier: str = Field("high", pattern="^(high|medium|low|string)$")
 
 
 class RankingRequest(BaseModel):
@@ -85,15 +88,21 @@ def _register_generated(root: Path) -> None:
 
 def create_app(release_root: str | Path | None = None, *, licensed: bool = False,
                licensed_root: str | Path | None = None) -> FastAPI:
-    root = Path(release_root or os.environ.get("INTPATH_RELEASE_ROOT", "Data/intpathv2/release")).resolve()
+    root = Path(release_root or os.environ.get("INTPATH_RELEASE_ROOT", "Data/intpathv2/db")).resolve()
+    # one unified database (all sources licensed by the operator): KEGG drawings etc. served directly
+    unified = os.environ.get("INTPATH_UNIFIED", "1") == "1"
     heavy = threading.BoundedSemaphore(int(os.environ.get("INTPATH_MAX_JOBS", "2")))  # concurrent GSEA runs
     app = FastAPI(title="IntPath (licensed)" if licensed else "IntPath", version=__version__,
                   description="IntPathV2: integrated pathways, PPIs, GO and MSigDB with gene set enrichment")
 
     if licensed:
+        # Local trial only: INTPATH_DEV_USER stands in for the sign-in gate on a workstation.
+        # Deploy/docker-compose.yml never sets it; behind the gateway the gate decides.
+        dev_user = os.environ.get("INTPATH_DEV_USER", "").strip()
+
         @app.middleware("http")
         async def require_signed_in(request, call_next):
-            if not request.headers.get("x-igvf-user"):
+            if not request.headers.get("x-igvf-user") and not dev_user:
                 return JSONResponse({"error": "sign in at https://intpath.genohub.org/licensed/"}, status_code=401)
             return await call_next(request)
 
@@ -210,7 +219,7 @@ def create_app(release_root: str | Path | None = None, *, licensed: bool = False
             raise HTTPException(404, "unknown set")
         s = head[0]
         s["sources"] = [x for x in (s["sources"] or "").split(",") if x]
-        s["members"] = query(org, "SELECT source, source_set_id AS pathway FROM set_member WHERE set_id = ?", (set_id,))
+        s["members"] = query(org, "SELECT *, source_set_id AS pathway FROM set_member WHERE set_id = ?", (set_id,))
         s["genes"] = {r["symbol"]: r["sources"].split(",") for r in
                       query(org, "SELECT symbol, sources FROM set_gene WHERE set_id = ? ORDER BY symbol", (set_id,))}
         s["pairs"] = [{"a": r["gene_a"], "b": r["gene_b"], "relations": r["relations"].split(","),
@@ -222,6 +231,104 @@ def create_app(release_root: str | Path | None = None, *, licensed: bool = False
                                              "FROM msigdb_equivalent WHERE set_id = ?", (set_id,))
         return s
 
+    def _with_hits(d: dict, hits: set[str], focus: str = "") -> dict:
+        for n in d["nodes"]:
+            n["hit"] = any(g in hits for g in n.get("genes", ()))
+        keep = set(d.get("subpathways", {}).get(focus, ())) if focus else set()
+        if keep:  # a sub-pathway drawn inside an ancestor's diagram: flag its part
+            for n in d["nodes"]:
+                n["focus"] = n["id"] in keep or n["kind"] in ("shape", "label", "title")
+        d.pop("subpathways", None)
+        return d
+
+    @app.get("/api/{org}/diagrams/{set_id:path}")
+    def diagrams_of(org: str, set_id: str):
+        """Drawings available for a gene set: KEGG / WikiPathways (positioned), Reactome (embedded viewer)."""
+        members = query(org, "SELECT * FROM set_member WHERE set_id = ?", (set_id,))
+        try:
+            stored = {(r["source"], r["source_set_id"]): r["name"] for r in
+                      query(org, "SELECT source, source_set_id, name FROM diagram")}
+            drawn_in = {r["source_set_id"]: r["diagram_id"] for r in
+                        query(org, "SELECT source_set_id, diagram_id FROM diagram_of WHERE source = 'Reactome'")}
+        except Exception:  # release built before diagrams existed
+            stored, drawn_in = {}, {}
+        out = []
+        for m in members:
+            key = (m["source"], m["source_set_id"])
+            if m["source"] == "Reactome":
+                diag = drawn_in.get(key[1])
+                if diag and ("Reactome", diag) in stored:
+                    out.append({"source": "Reactome", "id": diag, "focus": key[1] if diag != key[1] else "",
+                                "name": stored[("Reactome", diag)], "member_name": m.get("name"), "kind": "drawing"})
+            elif key in stored:
+                out.append({"source": key[0], "id": key[1], "name": stored[key], "member_name": m.get("name"),
+                            "kind": "drawing"})
+            elif m["source"] == "KEGG" and (licensed or unified):
+                out.append({"source": "KEGG", "id": key[1], "name": key[1], "member_name": m.get("name"),
+                            "kind": "drawing"})  # fetched on demand
+        order = {"KEGG": 0, "WikiPathways": 1, "Reactome": 2}
+        return sorted(out, key=lambda d: order.get(d["source"], 9))
+
+    @app.get("/api/{org}/diagram/{source}/{sid}")
+    def diagram(org: str, source: str, sid: str, genes: str = "", focus: str = ""):
+        """One positioned pathway drawing, with the given genes flagged ``hit``."""
+        L = lib(org)
+        hits = set(L.resolve([g for g in genes.replace(",", " ").split() if g][:20000])[0]) if genes else set()
+        con = L.connect()
+        try:
+            row = con.execute("SELECT data FROM diagram WHERE source = ? AND source_set_id = ?", (source, sid)).fetchone()
+        except Exception:
+            row = None
+        finally:
+            con.close()
+        if row is not None:
+            return _with_hits(diagrams.unpack(row[0]), hits, focus)
+        if source == "KEGG" and (licensed or unified) and re.fullmatch(r"[a-z]{2,4}\d{5}", sid):
+            # organisms built without KGML: fetch the drawing once through the rate-limited KEGG gateway
+            cache = root / L.organism / "kgml" / f"{sid}.xml"
+            try:
+                sources.kegg_get(f"get/{sid}/kgml", cache)
+            except Exception:
+                raise HTTPException(404, "KEGG drawing unavailable") from None
+            d = diagrams.kgml_diagram(cache.read_bytes(), lambda k: L.aliases.get(k.split(":", 1)[-1].upper()))
+            if d is None:
+                raise HTTPException(404, "no drawing for this KEGG map")
+            return _with_hits(d, hits)
+        raise HTTPException(404, "no drawing")
+
+    @app.get("/api/{org}/map/{set_id:path}")
+    def pathway_map(org: str, set_id: str, format: str = "cyjs", ppi: str = "",  # noqa: A002
+                    genes: str = "", max_nodes: int = Query(maps.MAX_NODES, alias="max")):
+        """Map of one gene set: Cytoscape.js JSON (default), SBML-qual (format=sbml) or SBGN-ML (format=sbgn).
+
+        ``genes``: the user's gene list (comma/space separated); those genes are flagged ``hit``.
+        ``ppi``: high | medium | low adds merged PPI edges among the set's genes.
+        """
+        if ppi not in ("", "high", "medium", "low", "string"):
+            raise HTTPException(400, "ppi must be high, medium, low (physical PPI) or string")
+        if format not in ("cyjs", "sbml", "sbgn"):
+            raise HTTPException(400, "format must be cyjs, sbml or sbgn")
+        L = lib(org)
+        wanted = [g for g in genes.replace(",", " ").split() if g][:20000]
+        hits = set(L.resolve(wanted)[0]) if wanted else set()
+        con = L.connect()
+        try:
+            graph = maps.set_graph(con, set_id, ppi_tier=ppi or None, highlight=hits,
+                                   adjacency=L.adjacency.get(ppi) if ppi else None,
+                                   max_nodes=min(max(max_nodes, 10), maps.MAX_NODES) if format == "cyjs" else maps.MAX_NODES)
+        except KeyError:
+            raise HTTPException(404, "unknown set") from None
+        finally:
+            con.close()
+        stem = "".join(c if c.isalnum() else "_" for c in graph["name"])[:60] or "pathway"
+        if format == "sbml":
+            return Response(maps.to_sbml_qual(graph), media_type="application/xml",
+                            headers={"Content-Disposition": f'attachment; filename="{stem}.sbml.xml"'})
+        if format == "sbgn":
+            return Response(maps.to_sbgn_af(graph), media_type="application/xml",
+                            headers={"Content-Disposition": f'attachment; filename="{stem}.sbgn"'})
+        return maps.to_cytoscape(graph)
+
     @app.get("/api/{org}/gene/{symbol}")
     def gene(org: str, symbol: str, limit: int = 300):
         L = lib(org)
@@ -230,13 +337,20 @@ def create_app(release_root: str | Path | None = None, *, licensed: bool = False
             raise HTTPException(404, "gene not in IntPath")
         sets = query(org, "SELECT g.set_id AS id, g.name, g.collection, sg.sources FROM set_gene sg JOIN gset g "
                           "ON g.set_id = sg.set_id WHERE sg.symbol = ? ORDER BY g.collection, g.name", (g,))
+        lim = min(max(limit, 1), 2000)
         partners = query(org, "SELECT CASE WHEN gene_a = ? THEN gene_b ELSE gene_a END AS gene, sources, n_pmids, "
                               "string_score, tier, pathway_sets != '' AS pathway_supported FROM ppi "
                               "WHERE gene_a = ? OR gene_b = ? ORDER BY n_sources DESC, n_pmids DESC LIMIT ?",
-                         (g, g, g, min(max(limit, 1), 2000)))
+                         (g, g, g, lim))
+        try:
+            string = query(org, "SELECT CASE WHEN gene_a = ? THEN gene_b ELSE gene_a END AS gene, string_score "
+                                "FROM string_ppi WHERE gene_a = ? OR gene_b = ? ORDER BY string_score DESC LIMIT ?",
+                           (g, g, g, lim))
+        except Exception:  # releases built before STRING was separate
+            string = []
         for r in sets + partners:
             r["sources"] = r["sources"].split(",")
-        return {"gene": g, "sets": sets, "ppi_partners": partners}
+        return {"gene": g, "sets": sets, "ppi_partners": partners, "string_partners": string}
 
     @app.post("/api/{org}/enrich/ora")
     def run_ora(org: str, req: GeneListRequest):

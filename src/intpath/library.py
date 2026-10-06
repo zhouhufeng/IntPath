@@ -125,6 +125,16 @@ def load_library(db_path: str | Path, organism: str = "") -> Library:
                 raw_adj[t].setdefault(a, set()).add(b)
                 raw_adj[t].setdefault(b, set()).add(a)
     adjacency = {t: {g: frozenset(n) for g, n in adj.items()} for t, adj in raw_adj.items()}
+    # STRING is a separate network ("string" key); older releases merged it into ppi
+    try:
+        s_adj: dict[str, set[str]] = {}
+        for a, b in con.execute("SELECT gene_a, gene_b FROM string_ppi"):
+            a, b = I(a), I(b)
+            s_adj.setdefault(a, set()).add(b)
+            s_adj.setdefault(b, set()).add(a)
+        adjacency["string"] = {g: frozenset(n) for g, n in s_adj.items()}
+    except sqlite3.OperationalError:
+        adjacency["string"] = {}
     con.close()
     return Library(organism or meta.get("organism_key", ""), sets, {s.id: s for s in sets}, by_gene, aliases,
                    adjacency, meta, db_path)

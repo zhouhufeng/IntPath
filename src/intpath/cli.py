@@ -61,6 +61,9 @@ def main(argv: list[str] | None = None) -> None:
     b.add_argument("--no-go", action="store_true")
     b.add_argument("--no-ppi", action="store_true")
     b.add_argument("--no-msigdb", action="store_true")
+    b.add_argument("--merge", choices=["intpath", "guarded"], default="intpath",
+                   help="intpath: the published IntPath algorithm (default); guarded: + gene-overlap/entity/hierarchy guards")
+    b.add_argument("--no-biocyc", action="store_true", help="skip the archived old-IntPath BioCyc pathways")
     b.add_argument("--no-topology", action="store_true", help="skip KGML/GPML gene-pair extraction")
     b.add_argument("--public", action="store_true", help="exclude licence-restricted sources (KEGG, BioCyc)")
 
@@ -74,6 +77,12 @@ def main(argv: list[str] | None = None) -> None:
     bm.add_argument("--limit", type=int)
     bm.add_argument("--rebuild", action="store_true")
     bm.add_argument("--topology", action="store_true", help="also download KGML gene pairs (slow: ~150-400 KEGG calls/organism)")
+
+    dg = sub.add_parser("diagrams", help="store KEGG/WikiPathways drawings in existing release databases")
+    dg.add_argument("organisms", nargs="+")
+    dg.add_argument("--raw", default="Data/intpathv2/raw")
+    dg.add_argument("--release", action="append", default=None,
+                    help="release root(s); default: Data/intpathv2/release and Data/intpathv2/release-open")
 
     lg = sub.add_parser("legacy", help="re-run the 2012 merge on archived old IntPath normalized files")
     lg.add_argument("--data", default="Data")
@@ -118,7 +127,8 @@ def main(argv: list[str] | None = None) -> None:
         stats = build(organisms.get(a.organism), a.raw, a.out, pathway_sources=tuple(a.sources.split(",")),
                       biocyc_col=a.biocyc_col, with_go=not a.no_go, with_ppi=not a.no_ppi,
                       string_min_score=a.string_min_score, extra_ppi=extra, topology=not a.no_topology,
-                      public=a.public, with_msigdb=not a.no_msigdb)
+                      public=a.public, with_msigdb=not a.no_msigdb, merge_method=a.merge,
+                      legacy_data_root=None if a.no_biocyc else "Data")
         print(json.dumps({k: v for k, v in stats.items() if k != "files"}, indent=2))
         return
 
@@ -129,6 +139,21 @@ def main(argv: list[str] | None = None) -> None:
         print(json.dumps(build_many(a.raw, out, public=a.public, workers=a.workers, lineage=a.lineage,
                                     codes=a.codes.split(",") if a.codes else None, limit=a.limit,
                                     rebuild=a.rebuild, topology=a.topology), indent=2)[:2000])
+        return
+
+    if a.cmd == "diagrams":
+        from .diagrams import add_diagrams
+        from .mapping import GeneMapper
+
+        for name in a.organisms:
+            org = organisms.get(name)
+            raw = Path(a.raw) / org.key
+            mapper = GeneMapper.for_organism(org, raw)
+            sym_of = lambda k, m=mapper: m.map(k.split(":", 1)[-1])  # noqa: E731
+            for rel in a.release or ["Data/intpathv2/release", "Data/intpathv2/release-open"]:
+                db = Path(rel) / org.key / "intpath.sqlite"
+                if db.exists():
+                    print(org.key, rel, add_diagrams(db, raw, org, sym_of))
         return
 
     if a.cmd == "legacy":
