@@ -210,6 +210,8 @@ def build(
 
     stats["tier"] = "open" if public else "full"
     stats["versions"] = sources.source_versions(raw_root, org, msig.version if msig else None)
+    if "BioCyc" not in stats["sources"]:  # list only the pathway sources actually merged
+        stats["versions"].pop("BioCyc", None)
     if exports:
         stats["files"] = write_release(sets, out)
     else:  # wide builds: the database, GMT and stats only
