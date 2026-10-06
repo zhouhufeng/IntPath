@@ -187,7 +187,10 @@ def numbered_entity_mismatch(a: str, b: str) -> bool:
 # Name cleaning (IntPathV2)
 # --------------------------------------------------------------------------- #
 _TAG = re.compile(r"<[^>]+>")
-_SPECIES_SUFFIX = re.compile(r"\s+-\s+[A-Z][a-z]+ [a-z]+(\s+\([^)]*\))?\s*$")  # KEGG REST: " - Homo sapiens (human)"
+# KEGG REST: " - Homo sapiens (human)", " - Mycobacterium tuberculosis H37Rv" (strain tokens carry
+# a capital or a digit, so pathway subtitles such as " - multiple species" are kept);
+# disease subtitles ("MPS I - Hurler syndrome (...)") are not species names
+_SPECIES_SUFFIX = re.compile(r"\s+-\s+[A-Z][a-z]+ (?!syndrome\b|disease\b)[a-z]+(?:\s+(?=\S*[A-Z0-9])\S+)*(\s+\([^)]*\))?\s*$")
 _WS = re.compile(r"\s+")
 
 

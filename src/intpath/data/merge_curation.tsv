@@ -3196,3 +3196,747 @@ Zinc homeostasis	Platelet homeostasis	separate	different process; names share wo
 Zinc homeostasis	Ion homeostasis	separate	different process; names share words only
 Zinc homeostasis	Glucose homeostasis	separate	different process; names share words only
 Thyroid hormone synthesis	Thyroxine biosynthesis	merge	thyroxine is the thyroid hormone
+# --- Mouse and yeast alignment pairs (2026-10-06)
+Activation of BMF and translocation to mitochondria	Activation of NOXA and translocation to mitochondria	separate	different gene, subtype or process
+Acyl chain remodelling of PE	Acyl chain remodelling of PC	separate	different gene, subtype or process
+Acyl chain remodelling of PS	Acyl chain remodelling of PI	separate	different gene, subtype or process
+Adipogenesis	Adipogenesis genes	merge	same process
+Amino sugar and nucleotide sugar metabolism	Amino acid metabolism	separate	different gene, subtype or process
+Antigen processing: Ubiquitination & Proteasome degradation	Proteasome degradation	separate	general vs specific (part, variant or context)
+Biosynthesis of D-series resolvins	Biosynthesis of DPAn-3-derived 13-series resolvins	separate	different gene, subtype or process
+Biosynthesis of protectins	Synthesis of PE	separate	different gene, subtype or process
+Cholesterol biosynthesis via desmosterol (Bloch pathway)	Cholesterol biosynthesis	separate	general vs specific (part, variant or context)
+Citrate cycle (TCA cycle)	TCA cycle	merge	synonyms (TCA cycle)
+Delta Notch signaling pathway	Notch signaling pathway	merge	same Notch signaling (Delta is its ligand)
+Eicosanoid synthesis	Eicosanoid lipid synthesis map	merge	same process
+Fatty acid oxidation	Fatty acid omega oxidation	separate	general vs specific (part, variant or context)
+FGFR1b ligand binding and activation	FGFR3b ligand binding and activation	separate	different gene, subtype or process
+FGFR1c ligand binding and activation	FGFR2c ligand binding and activation	separate	different gene, subtype or process
+FGFR2 ligand binding and activation	FGFR2c ligand binding and activation	separate	different gene, subtype or process
+FGFR2c ligand binding and activation	FGFR2b ligand binding and activation	separate	different gene, subtype or process
+FGFR4 ligand binding and activation	FGFR1b ligand binding and activation	separate	different gene, subtype or process
+FOXO-mediated transcription	FOXO-mediated transcription of cell cycle genes	separate	general vs specific (part, variant or context)
+GPCR downstream signalling	Wnt signaling	separate	different gene, subtype or process
+GPCRs non odorant	GPCRs odorant	separate	general vs specific (part, variant or context)
+GRB2 events in EGFR signaling	GRB2 events in ERBB2 signaling	separate	different gene, subtype or process
+HDACs deacetylate histones	Acetylation	separate	different gene, subtype or process
+HDMs demethylate histones	Methylation	separate	different gene, subtype or process
+HS-GAG biosynthesis	DS-GAG biosynthesis	separate	different gene, subtype or process
+IL 1 signaling pathway	IL 3 signaling pathway	separate	different gene, subtype or process
+IL 2 signaling pathway	IL 4 signaling pathway	separate	different gene, subtype or process
+IL 3 signaling pathway	IL 6 signaling pathway	separate	different gene, subtype or process
+IL 5 signaling pathway	IL 7 signaling pathway	separate	different gene, subtype or process
+IL 6 signaling pathway	IL 2 signaling pathway	separate	different gene, subtype or process
+IL 7 signaling pathway	IL 1 signaling pathway	separate	different gene, subtype or process
+IL 9 signaling pathway	IL 5 signaling pathway	separate	different gene, subtype or process
+IL-17 signaling pathway	IL 7 signaling pathway	separate	different gene, subtype or process
+Interferon Signaling	Type II interferon signaling IFNG	separate	general vs specific (part, variant or context)
+Interleukin-1 signaling	Interleukin-15 signaling	separate	different gene, subtype or process
+Interleukin-10 signaling	Interleukin-12 signaling	separate	different gene, subtype or process
+Interleukin-15 signaling	Interleukin-18 signaling	separate	different gene, subtype or process
+Interleukin-18 signaling	Interleukin-10 signaling	separate	different gene, subtype or process
+Interleukin-21 signaling	Interleukin-37 signaling	separate	different gene, subtype or process
+Interleukin-33 signaling	Interleukin-37 signaling	separate	different gene, subtype or process
+Interleukin-35 Signalling	Interleukin-15 signaling	separate	different gene, subtype or process
+Interleukin-38 signaling	Interleukin-18 signaling	separate	different gene, subtype or process
+Interleukin-6 signaling	Interleukin-7 signaling	separate	different gene, subtype or process
+Interleukin-9 signaling	Interleukin-21 signaling	separate	different gene, subtype or process
+Intestinal absorption	Intestinal hexose absorption	separate	general vs specific (part, variant or context)
+Ion homeostasis	Iron homeostasis	separate	different gene, subtype or process
+IRAK1 recruits IKK complex	IRAK1 recruits IKK complex upon TLR7/8 or 9 stimulation	separate	general vs specific (part, variant or context)
+Metabolism	Purine metabolism	separate	different gene, subtype or process
+Metabolism of vitamins and cofactors	Metabolism of cofactors	separate	general vs specific (part, variant or context)
+Muscle contraction	Striated muscle contraction	separate	general vs specific (part, variant or context)
+NCAM1 interactions	PECAM1 interactions	separate	different gene, subtype or process
+NOD-like receptor signaling pathway	Nod like receptor NLR signaling pathway	merge	same receptor signaling
+One carbon metabolism	Glutathione and one carbon metabolism	separate	general vs specific (part, variant or context)
+One carbon metabolism and related pathways	One carbon metabolism	merge	same one-carbon metabolism
+p38 Mapk signaling pathway	Mapk signaling pathway	separate	general vs specific (part, variant or context)
+Parkinson disease	Parkinson 39 s disease	merge	same disease
+Phospholipase C-mediated cascade; FGFR3	Phospholipase C-mediated cascade; FGFR4	separate	different gene, subtype or process
+PRC2 methylates histones and DNA	Methylation	separate	different gene, subtype or process
+Programmed Cell Death	TRIF-mediated programmed cell death	separate	general vs specific (part, variant or context)
+Protein methylation	Methylation	separate	general vs specific (part, variant or context)
+Regulated Necrosis	RIPK1-mediated regulated necrosis	separate	general vs specific (part, variant or context)
+Regulation of lipid metabolism by PPARalpha	Retinol metabolism	separate	different gene, subtype or process
+Regulation of MITF-M-dependent genes involved in apoptosis	Regulation of Apoptosis	separate	general vs specific (part, variant or context)
+Regulation of RUNX1 Expression and Activity	Regulation of HMOX1 expression and activity	separate	different gene, subtype or process
+Regulation of RUNX3 expression and activity	Regulation of RUNX1 Expression and Activity	separate	different gene, subtype or process
+RHO GTPase cycle	RHOV GTPase cycle	separate	different gene, subtype or process
+RHOA GTPase cycle	RHOQ GTPase cycle	separate	different gene, subtype or process
+RHOB GTPase cycle	RHOC GTPase cycle	separate	different gene, subtype or process
+RHOC GTPase cycle	RHOF GTPase cycle	separate	different gene, subtype or process
+RHOF GTPase cycle	RHOJ GTPase cycle	separate	different gene, subtype or process
+RHOG GTPase cycle	RHOB GTPase cycle	separate	different gene, subtype or process
+RHOH GTPase cycle	RHOU GTPase cycle	separate	different gene, subtype or process
+RHOJ GTPase cycle	RHOH GTPase cycle	separate	different gene, subtype or process
+RHOQ GTPase cycle	RHOG GTPase cycle	separate	different gene, subtype or process
+RHOU GTPase cycle	RHOT2 GTPase cycle	separate	different gene, subtype or process
+RHOV GTPase cycle	RHOA GTPase cycle	separate	different gene, subtype or process
+RMTs methylate histone arginines	Methylation	separate	different gene, subtype or process
+RNA Polymerase I Transcription	RNA Polymerase II Pre-transcription Events	separate	different gene, subtype or process
+RUNX1 regulates transcription of genes involved in BCR signaling	RUNX1 regulates transcription of genes involved in interleukin signaling	separate	different gene, subtype or process
+RUNX1 regulates transcription of genes involved in differentiation of HSCs	RUNX1 regulates transcription of genes involved in differentiation of myeloid cells	separate	different gene, subtype or process
+Scavenging by Class B Receptors	Scavenging by Class A Receptors	separate	different gene, subtype or process
+Sensory perception of taste	Sensory perception of salty taste	separate	general vs specific (part, variant or context)
+SHC-mediated cascade:FGFR3	SHC-mediated cascade:FGFR4	separate	different gene, subtype or process
+SHC1 events in EGFR signaling	SHC1 events in ERBB2 signaling	separate	different gene, subtype or process
+Signal Transduction	Signal transduction of S1P receptor	separate	general vs specific (part, variant or context)
+Signaling by FGFR4	Signaling by EGFR	separate	different gene, subtype or process
+Signaling by NOTCH1	Signaling by NOTCH3	separate	different gene, subtype or process
+Signalling to RAS	Signalling to ERKs	separate	different gene, subtype or process
+SLC-mediated transport of inorganic anions	SLC-mediated transport of organic cations	separate	different gene, subtype or process
+Sphingolipid signaling pathway	ID signaling pathway	separate	different gene, subtype or process
+Synthesis of bile acids and bile salts	Synthesis of bile acids and bile salts via 24-hydroxycholesterol	separate	general vs specific (part, variant or context)
+Synthesis of diphthamide-EEF2	Synthesis of PE	separate	different gene, subtype or process
+Synthesis of dolichyl-phosphate mannose	Synthesis of dolichyl-phosphate	separate	general vs specific (part, variant or context)
+Synthesis of dolichyl-phosphate-glucose	Synthesis of CL	separate	different gene, subtype or process
+Synthesis of GDP-mannose	Synthesis of PE	separate	different gene, subtype or process
+Synthesis of IPs in the nucleus	Synthesis of CL	separate	different gene, subtype or process
+Synthesis of Ketone Bodies	Synthesis and degradation of ketone bodies	separate	general vs specific (part, variant or context)
+Synthesis of PA	Synthesis of PG	separate	different gene, subtype or process
+Synthesis of PG	Synthesis of PE	separate	different gene, subtype or process
+Synthesis of PI	Synthesis of PS	separate	different gene, subtype or process
+TGF beta signaling pathway	TGF beta receptor signaling pathway	merge	same signaling
+TGF-beta signaling pathway	TGF beta signaling pathway	merge	same signaling
+Toll Like Receptor 10 (TLR10) Cascade	Toll Like Receptor 3 (TLR3) Cascade	separate	different gene, subtype or process
+Toll Like Receptor 3 (TLR3) Cascade	Toll Like Receptor 5 (TLR5) Cascade	separate	different gene, subtype or process
+Toll Like Receptor 9 (TLR9) Cascade	Toll Like Receptor 4 (TLR4) Cascade	separate	different gene, subtype or process
+TRAF6 mediated IRF7 activation	TRAF6 mediated IRF7 activation in TLR7/8 or 9 signaling	separate	general vs specific (part, variant or context)
+Translesion Synthesis by POLH	Translesion synthesis by POLK	separate	different gene, subtype or process
+Wax and plasmalogen biosynthesis	Wax biosynthesis	separate	general vs specific (part, variant or context)
+Acyl chain remodeling of CL	Acyl chain remodelling of PC	separate	different gene, subtype or process
+Acyl chain remodelling of PC	Acyl chain remodelling of PI	separate	different gene, subtype or process
+Amino sugar and nucleotide sugar metabolism	Nucleotide metabolism	separate	general vs specific (part, variant or context)
+Autophagy - yeast	Autophagy	merge	same process (organism-specific KEGG map)
+Biosynthesis of DHA-derived SPMs	Biosynthesis of EPA-derived SPMs	separate	different gene, subtype or process
+Biosynthesis of secondary metabolites	Biosynthesis of various plant secondary metabolites	separate	general vs specific (part, variant or context)
+Cell cycle - yeast	Cell Cycle	merge	same process (organism-specific KEGG map)
+Death Receptor Signaling	TCR signaling	separate	different gene, subtype or process
+E2F mediated regulation of DNA replication	DNA replication	separate	general vs specific (part, variant or context)
+Glutamate degradation IX	Glutamate degradation I	separate	different gene, subtype or process
+Glycerophospholipid biosynthesis	Phospholipid biosynthesis	merge	same process
+HSF1-dependent transactivation	HSF1 activation	separate	different gene, subtype or process
+Isoleucine degradation	Leucine degradation	separate	different gene, subtype or process
+Leucine biosynthesis	Isoleucine biosynthesis	separate	different gene, subtype or process
+MAPK signaling pathway - yeast	MAPK signaling pathway	merge	same signaling (organism-specific KEGG map)
+Metabolism	Nucleotide metabolism	separate	different gene, subtype or process
+Mitochondrial Fatty Acid Beta-Oxidation	Fatty acid oxidation	merge	same process (yeast fatty-acid oxidation is beta-oxidation)
+Mitophagy - yeast	Mitophagy	merge	same process (organism-specific KEGG map)
+Mitotic Metaphase and Anaphase	Mitotic Anaphase	separate	general vs specific (part, variant or context)
+Neurotransmitter release cycle	Acetylcholine Neurotransmitter Release Cycle	separate	general vs specific (part, variant or context)
+Organic anion transport by SLC5/17/25 transporters	Organic anion transport by SLCO transporters	separate	different gene, subtype or process
+Pantothenate and CoA biosynthesis	Pantothenate and coenzyme A biosynthesis	merge	CoA = coenzyme A
+Peroxisome	Peroxisome - yeast	merge	same organelle pathway (organism-specific KEGG map)
+Phenylalanine, tyrosine and tryptophan biosynthesis	Phenylalanine tyrosine and tryptophan biosynthesis	merge	same name, punctuation differs
+Phosphatidic acid and phospholipid biosynthesis	Phospholipid biosynthesis	separate	general vs specific (part, variant or context)
+PKA activation	PI3K/AKT activation	separate	different gene, subtype or process
+Potassium Channels	Tandem pore domain potassium channels	separate	general vs specific (part, variant or context)
+Pyrimidine salvage	Pyrimidine ribonucleotide salvage pathways	merge	same process
+RAC1 GTPase cycle	RAC3 GTPase cycle	separate	different gene, subtype or process
+Regulation of TP53 Degradation	Regulation of TP53 Expression and Degradation	separate	general vs specific (part, variant or context)
+RHO GTPase cycle	RHOC GTPase cycle	separate	different gene, subtype or process
+RHOC GTPase cycle	RHOA GTPase cycle	separate	different gene, subtype or process
+RHOJ GTPase cycle	RHOU GTPase cycle	separate	different gene, subtype or process
+RHOQ GTPase cycle	RHOJ GTPase cycle	separate	different gene, subtype or process
+RHOT1 GTPase cycle	RHOF GTPase cycle	separate	different gene, subtype or process
+RHOU GTPase cycle	RHOV GTPase cycle	separate	different gene, subtype or process
+RHOV GTPase cycle	RHOF GTPase cycle	separate	different gene, subtype or process
+RNA Polymerase II Pre-transcription Events	RNA Polymerase II Transcription	separate	general vs specific (part, variant or context)
+RNA Polymerase III Transcription Initiation	RNA Polymerase I Transcription Initiation	separate	different gene, subtype or process
+RNA Polymerase III Transcription Initiation From Type 2 Promoter	RNA Polymerase I Transcription Initiation	separate	different gene, subtype or process
+RND1 GTPase cycle	RND3 GTPase cycle	separate	different gene, subtype or process
+Sphingolipid de novo biosynthesis	Sphingolipid biosynthesis	merge	same process
+Superpathway polyamine biosynthesis	Serine biosynthesis	separate	different gene, subtype or process
+Synthesis of diphthamide-EEF2	Synthesis of PA	separate	different gene, subtype or process
+Synthesis of PE	Synthesis of PA	separate	different gene, subtype or process
+Synthesis of PI	Biosynthesis of protectins	separate	different gene, subtype or process
+TCA cycle detailed	TCA cycle	merge	same cycle
+The phototransduction cascade	Inactivation, recovery and regulation of the phototransduction cascade	separate	general vs specific (part, variant or context)
+TP53 Regulates Transcription of Cell Cycle Genes	TP53 regulates transcription of additional cell cycle genes whose exact role in the p53 pathway remain uncertain	separate	general vs specific (part, variant or context)
+Tryptophan degradation	Tryptophan degradation via kynurenine	merge	same process (kynurenine route)
+# --- Name review pass, mouse / yeast / M. tuberculosis names (2026-10-06)
+Alanine, aspartate and glutamate metabolism	Aspartate biosynthesis	separate	different process; names share words only
+Arginine and proline metabolism	Arginine degradation	separate	different process; names share words only
+Arginine biosynthesis	Arginine degradation	separate	different process; names share words only
+Arginine degradation	RMTs methylate histone arginines	separate	different process; names share words only
+Asparagine biosynthesis	Aspartate and asparagine metabolism	separate	different process; names share words only
+Asparagine biosynthesis	Asparagine N-linked glycosylation	separate	different process; names share words only
+Asparagine degradation	Asparagine biosynthesis	separate	different process; names share words only
+Asparagine degradation	Aspartate and asparagine metabolism	separate	different process; names share words only
+Asparagine degradation	Asparagine N-linked glycosylation	separate	different process; names share words only
+Aspartate biosynthesis	Aspartate and asparagine metabolism	separate	different process; names share words only
+Aspartate biosynthesis	Malate-aspartate shuttle	separate	different process; names share words only
+Autophagy - yeast	Autophagy - other	separate	different process; names share words only
+Autophagy - yeast	Cell cycle - yeast	separate	different process; names share words only
+Basal transcription factors	Translation factors	separate	different process; names share words only
+Basal transcription factors	Activation of the AP-1 family of transcription factors	separate	different process; names share words only
+Biosynthesis of amino acids	Sulfur amino acid biosynthesis	separate	different process; names share words only
+Biosynthesis of amino acids	SLC-mediated transport of amino acids	separate	different process; names share words only
+Biosynthesis of unsaturated fatty acids	Fatty acid metabolism	separate	different process; names share words only
+Carbon metabolism	Principal pathways of carbon metabolism	merge	same process
+Carbon metabolism	Carbon fixation by Calvin cycle	separate	general vs specific (part, variant or context)
+Carbon metabolism	Metabolism	separate	different process; names share words only
+Cell cycle - yeast	Cell Cycle, Mitotic	separate	different process; names share words only
+Cell cycle and cell division	Cell Cycle	merge	same process
+Cell cycle and cell division	Cell Cycle, Mitotic	separate	different process; names share words only
+Cell cycle and cell division	Cell Cycle Checkpoints	separate	different process; names share words only
+Cell cycle and cell division	Cell cycle - yeast	separate	different process; names share words only
+Citrate cycle (TCA cycle)	TCA cycle detailed	merge	same cycle
+Cysteine and methionine metabolism	Methionine degradation	separate	different process; names share words only
+Cysteine and methionine metabolism	Threonine and methionine biosynthesis	separate	different process; names share words only
+Cysteine biosynthesis from homoserine	Cysteine and methionine metabolism	separate	different process; names share words only
+Cysteine biosynthesis from homoserine	Degradation of cysteine and homocysteine	separate	different process; names share words only
+Cysteine biosynthesis from homoserine	Cysteine formation from homocysteine	separate	different process; names share words only
+Cytoplasmic ribosomal proteins	Cytoplasmic tRNA synthetases	separate	different process; names share words only
+Cytoplasmic tRNA synthetases	Mitochondrial tRNA synthetases	separate	different process; names share words only
+D-Amino acid metabolism	Sulfur amino acid biosynthesis	separate	different process; names share words only
+De novo biosynthesis of purine nucleotides	Sphingolipid de novo biosynthesis	separate	different process; names share words only
+De novo biosynthesis of purine nucleotides	De novo NAD biosynthesis	separate	different process; names share words only
+De novo biosynthesis of purine nucleotides	De novo biosynthesis of pyrimidine deoxyribonucleotides	separate	different process; names share words only
+De novo biosynthesis of purine nucleotides	De novo biosynthesis of pyrimidine ribonucleotides	separate	different process; names share words only
+De novo biosynthesis of pyrimidine deoxyribonucleotides	De novo biosynthesis of pyrimidine ribonucleotides	separate	different process; names share words only
+De novo biosynthesis of pyrimidine deoxyribonucleotides	Sphingolipid de novo biosynthesis	separate	different process; names share words only
+De novo biosynthesis of pyrimidine ribonucleotides	Pyrimidine ribonucleotide salvage pathways	separate	different process; names share words only
+De novo biosynthesis of pyrimidine ribonucleotides	Sphingolipid de novo biosynthesis	separate	different process; names share words only
+De novo NAD biosynthesis	Sphingolipid de novo biosynthesis	separate	different process; names share words only
+De novo NAD biosynthesis	De novo biosynthesis of pyrimidine deoxyribonucleotides	separate	different process; names share words only
+De novo NAD biosynthesis	De novo biosynthesis of pyrimidine ribonucleotides	separate	different process; names share words only
+Eukaryotic transcription initiation	RNA Polymerase II Transcription Initiation	separate	different process; names share words only
+Fatty acid biosynthesis initial steps	Fatty acid biosynthesis	separate	general vs specific (part, variant or context)
+Fatty acid biosynthesis initial steps	Fatty acids	separate	different process; names share words only
+Fatty acid biosynthesis initial steps	Fatty acid metabolism	separate	general vs specific (part, variant or context)
+Fatty acid oxidation	mitochondrial fatty acid beta-oxidation of saturated fatty acids	separate	general vs specific (part, variant or context)
+Fatty acid oxidation	Fatty acid metabolism	separate	general vs specific (part, variant or context)
+Galactose metabolism	Lactose degradation and galactose metabolism	separate	general vs specific (part, variant or context)
+Glucose 1 phosphate metabolism	Glucose metabolism	separate	general vs specific (part, variant or context)
+Glucose 1 phosphate metabolism	Synthesis of dolichyl-phosphate-glucose	separate	different process; names share words only
+Glucose 1 phosphate metabolism	Inositol phosphate metabolism	separate	different process; names share words only
+Glutamate biosynthesis superpathway	Superpathway polyamine biosynthesis	separate	different process; names share words only
+Glutamate biosynthesis superpathway	Superpathway of serine and glycine biosynthesis	separate	different process; names share words only
+Glutamate biosynthesis superpathway	Glutamate degradation I	separate	different process; names share words only
+Glutamate biosynthesis superpathway	Glutamate and glutamine metabolism	separate	different process; names share words only
+Glutamate degradation I	Glutamate and glutamine metabolism	separate	different process; names share words only
+Glutamate degradation I	RNA Polymerase I Transcription	separate	different process; names share words only
+Glutamate degradation IX	Glutamate biosynthesis superpathway	separate	different process; names share words only
+Glutathione biosynthesis	Glutathione synthesis and recycling	merge	same process
+Glutathione biosynthesis	Glutathione conjugation	separate	different process; names share words only
+Glutathione biosynthesis	Glutathione glutaredoxin redox reaction	separate	different process; names share words only
+Glutathione glutaredoxin redox reaction	Glutathione metabolism	separate	general vs specific (part, variant or context)
+Glutathione metabolism	Glutathione biosynthesis	separate	general vs specific (part, variant or context)
+Glutathione metabolism	Metabolism	separate	different process; names share words only
+Glycine biosynthesis	Glycine degradation	separate	different process; names share words only
+Glycine biosynthesis	Glycine cleavage	separate	different process; names share words only
+Glycine biosynthesis	Glyoxylate metabolism and glycine degradation	separate	different process; names share words only
+Glycine cleavage	Glycine degradation	separate	different process; names share words only
+Glycine cleavage	Cleavage of the damaged pyrimidine	separate	different process; names share words only
+Glycine cleavage	Cleavage of the damaged purine	separate	different process; names share words only
+Glycine, serine and threonine metabolism	Superpathway of serine and glycine biosynthesis	separate	different process; names share words only
+Glycine, serine and threonine metabolism	Serine biosynthesis	separate	different process; names share words only
+Glycine, serine and threonine metabolism	Threonine biosynthesis	separate	different process; names share words only
+Glycogen catabolism	Glycogen metabolism	separate	general vs specific (part, variant or context)
+Glycogen catabolism	Glycogen synthesis	separate	different process; names share words only
+Glycogen catabolism	Nucleotide catabolism	separate	different process; names share words only
+Glycogen catabolism	Glycogen breakdown (glycogenolysis)	merge	catabolism = breakdown
+Glycolysis	Regulation of glycolysis by fructose 2,6-bisphosphate metabolism	separate	general vs specific (part, variant or context)
+Histidine metabolism	Histidine purine and pyrimidine superpathway	separate	general vs specific (part, variant or context)
+Histidine purine and pyrimidine superpathway	Histidine catabolism	separate	different process; names share words only
+Histidine purine and pyrimidine superpathway	Purine metabolism	separate	general vs specific (part, variant or context)
+Histidine purine and pyrimidine superpathway	Pyrimidine metabolism	separate	general vs specific (part, variant or context)
+Homocysteine and cysteine interconversion	Degradation of cysteine and homocysteine	separate	different process; names share words only
+Homocysteine and cysteine interconversion	Cysteine formation from homocysteine	separate	different process; names share words only
+Homocysteine and cysteine interconversion	Interconversion of polyamines	separate	different process; names share words only
+Homocysteine and cysteine interconversion	Cysteine and methionine metabolism	separate	different process; names share words only
+Homologous recombination	Meiotic recombination genes	separate	different process; names share words only
+Hormone signaling	Metabolism of amine-derived hormones	separate	different process; names share words only
+Isoleucine biosynthesis	Valine, leucine and isoleucine degradation	separate	different process; names share words only
+Isoleucine degradation	Isoleucine biosynthesis	separate	different process; names share words only
+Isoleucine degradation	Valine, leucine and isoleucine biosynthesis	separate	different process; names share words only
+Lactose degradation and galactose metabolism	Galactose catabolism	separate	different process; names share words only
+Leucine biosynthesis	Leucine degradation	separate	different process; names share words only
+Leucine biosynthesis	Valine, leucine and isoleucine degradation	separate	different process; names share words only
+Leucine degradation	Valine, leucine and isoleucine biosynthesis	separate	different process; names share words only
+Lysine biosynthesis	Lysine degradation	separate	different process; names share words only
+Lysine biosynthesis	Lysine catabolism	separate	different process; names share words only
+Lysine biosynthesis	Hypusine synthesis from eIF5A-lysine	separate	different process; names share words only
+Mannose type O-glycan biosynthesis	Fructose and mannose metabolism	separate	different process; names share words only
+MAPK signaling pathway	FCERI mediated MAPK activation	separate	general vs specific (part, variant or context)
+MAPK signaling pathway	ERK/MAPK targets	separate	general vs specific (part, variant or context)
+MAPK signaling pathway - yeast	Cell cycle - yeast	separate	different process; names share words only
+MAPK signaling pathway - yeast	Autophagy - yeast	separate	different process; names share words only
+MAPK signaling pathway - yeast	Mitophagy - yeast	separate	different process; names share words only
+Meiosis - yeast	MAPK signaling pathway - yeast	separate	different process; names share words only
+Meiosis - yeast	Cell cycle - yeast	separate	different process; names share words only
+Meiosis - yeast	Autophagy - yeast	separate	different process; names share words only
+Meiosis - yeast	Mitophagy - yeast	separate	different process; names share words only
+Methionine degradation	Methionine salvage pathway	separate	different process; names share words only
+Mismatch repair	Mismatch repair (MMR) directed by MSH2:MSH3 (MutSbeta)	separate	general vs specific (part, variant or context)
+Mismatch repair	Mismatch repair (MMR) directed by MSH2:MSH6 (MutSalpha)	separate	general vs specific (part, variant or context)
+Mitochondrial tRNA synthetases	Mitochondrial tRNA aminoacylation	merge	same process
+Mitochondrial tRNA synthetases	tRNA Aminoacylation	separate	different process; names share words only
+Mitophagy - yeast	Receptor Mediated Mitophagy	separate	different process; names share words only
+Mitophagy - yeast	Cell cycle - yeast	separate	different process; names share words only
+Motor proteins	Metabolism of proteins	separate	general vs specific (part, variant or context)
+N-Glycan biosynthesis	N-glycan trimming in the ER and Calnexin/Calreticulin cycle	separate	different process; names share words only
+N-Glycan biosynthesis	Other glycan degradation	separate	different process; names share words only
+Nutrient control of ribosomal gene expression	Gene expression (Transcription)	separate	different process; names share words only
+Nutrient control of ribosomal gene expression	Estrogen-dependent gene expression	separate	different process; names share words only
+Other types of O-glycan biosynthesis	N-Glycan biosynthesis	separate	different process; names share words only
+Oxidative phosphorylation	Pentose pathway non oxidative branch	separate	different process; names share words only
+Pantothenate and coenzyme A biosynthesis	Coenzyme A biosynthesis	separate	general vs specific (part, variant or context)
+Pantothenate and coenzyme A biosynthesis	Vitamin B5 (pantothenate) metabolism	merge	pantothenate = vitamin B5
+Pentose pathway non oxidative branch	Pentose phosphate pathway	separate	different process; names share words only
+Pentose phosphate pathway	RuMP cycle oxidative branch of the pentose phosphate pathway and formaldehyde assimilation	separate	general vs specific (part, variant or context)
+Peroxisome - yeast	MAPK signaling pathway - yeast	separate	different process; names share words only
+Peroxisome - yeast	Cell cycle - yeast	separate	different process; names share words only
+Peroxisome - yeast	Autophagy - yeast	separate	different process; names share words only
+Phenylalanine biosynthesis	Phenylalanine degradation	separate	different process; names share words only
+Phenylalanine degradation	Phenylalanine and tyrosine metabolism	separate	different process; names share words only
+Phenylalanine metabolism	Phenylalanine biosynthesis	separate	general vs specific (part, variant or context)
+Phenylalanine metabolism	Phenylalanine degradation	separate	general vs specific (part, variant or context)
+Phenylalanine tyrosine and tryptophan biosynthesis	Phenylalanine and tyrosine metabolism	separate	general vs specific (part, variant or context)
+Phenylalanine tyrosine and tryptophan biosynthesis	Tyrosine biosynthesis	separate	general vs specific (part, variant or context)
+Phenylalanine tyrosine and tryptophan biosynthesis	Phenylalanine biosynthesis	separate	general vs specific (part, variant or context)
+Phenylalanine, tyrosine and tryptophan biosynthesis	Tyrosine biosynthesis	separate	general vs specific (part, variant or context)
+Phenylalanine, tyrosine and tryptophan biosynthesis	Phenylalanine biosynthesis	separate	general vs specific (part, variant or context)
+Phosphatidic acid and phospholipid biosynthesis	Phospholipid metabolism	separate	general vs specific (part, variant or context)
+Phosphatidic acid and phospholipid biosynthesis	Phospholipids degradation	separate	different process; names share words only
+Phosphatidic acid and phospholipid biosynthesis	Role of phospholipids in phagocytosis	separate	different process; names share words only
+Phospholipid biosynthesis	Phospholipid metabolism	separate	general vs specific (part, variant or context)
+Phospholipid biosynthesis	Phospholipids degradation	separate	different process; names share words only
+Phospholipid biosynthesis	Role of phospholipids in phagocytosis	separate	different process; names share words only
+Phospholipids degradation	Phospholipid metabolism	separate	different process; names share words only
+Phospholipids degradation	Role of phospholipids in phagocytosis	separate	different process; names share words only
+Protein modifications	Post-translational protein modification	merge	same process
+Protein modifications	Transport to the Golgi and subsequent modification	separate	different process; names share words only
+Protein modifications	Post-translational modification: synthesis of GPI-anchored proteins	separate	different process; names share words only
+Protein modifications	Metabolism of proteins	separate	different process; names share words only
+Purine fermentation	Purine catabolism	separate	different process; names share words only
+Purine fermentation	Purine salvage	separate	different process; names share words only
+Purine metabolism	Purine fermentation	separate	general vs specific (part, variant or context)
+Pyrimidine metabolism	Salvage pathways of pyrimidine deoxyribonucleotides	separate	general vs specific (part, variant or context)
+Pyrimidine metabolism	Pyrimidine ribonucleotide salvage pathways	separate	general vs specific (part, variant or context)
+Pyruvate metabolism	Pyruvate dehydrogenase pathway	separate	general vs specific (part, variant or context)
+Riboflavin metabolism	Riboflavin FMN and FAD biosynthesis	merge	same vitamin B2 metabolism
+RNA degradation	RNA Polymerase II Transcription	separate	different process; names share words only
+RNA polymerase	RNA Polymerase II Transcription Initiation	separate	general vs specific (part, variant or context)
+RuMP cycle oxidative branch of the pentose phosphate pathway and formaldehyde assimilation	Pentose pathway non oxidative branch	separate	different process; names share words only
+Salvage pathways of pyrimidine deoxyribonucleotides	Pyrimidine salvage	separate	general vs specific (part, variant or context)
+Salvage pathways of pyrimidine deoxyribonucleotides	De novo biosynthesis of pyrimidine deoxyribonucleotides	separate	different process; names share words only
+Salvage pathways of pyrimidine deoxyribonucleotides	Pyrimidine ribonucleotide salvage pathways	separate	different process; names share words only
+Serine biosynthesis	Serine metabolism	separate	general vs specific (part, variant or context)
+Sphingolipid biosynthesis	Sphingolipid catabolism	separate	different process; names share words only
+Sphingolipid metabolism	Sphingolipid biosynthesis	separate	general vs specific (part, variant or context)
+Sphingolipid metabolism	Sphingolipid de novo biosynthesis	separate	general vs specific (part, variant or context)
+Starch and sucrose metabolism	Sucrose biosynthesis	separate	different process; names share words only
+Starch and sucrose metabolism	Starch and cellulose biosynthesis	separate	different process; names share words only
+Sulfate assimilation and copper detoxification	Sulfate assimilation pathway	separate	general vs specific (part, variant or context)
+Sulfate assimilation pathway	Sulfide oxidation to sulfate	separate	different process; names share words only
+Sulfur amino acid biosynthesis	Sulfur amino acid metabolism	separate	general vs specific (part, variant or context)
+Sulfur cycle	Sulfur degradation	separate	different process; names share words only
+Sulfur cycle	Sulfur amino acid biosynthesis	separate	different process; names share words only
+Sulfur degradation	Sulfur amino acid metabolism	separate	different process; names share words only
+Sulfur degradation	Sulfur amino acid biosynthesis	separate	different process; names share words only
+Sulfur metabolism	Sulfur degradation	separate	general vs specific (part, variant or context)
+Sulfur metabolism	Sulfur amino acid biosynthesis	separate	general vs specific (part, variant or context)
+Sulfur relay system	Sulfur degradation	separate	different process; names share words only
+Superpathway of branched chain amino acid biosynthesis	Branched-chain amino acid catabolism	separate	different process; names share words only
+Superpathway of branched chain amino acid biosynthesis	Biosynthesis of amino acids	separate	different process; names share words only
+Superpathway of branched chain amino acid biosynthesis	Sulfur amino acid biosynthesis	separate	different process; names share words only
+Superpathway of branched chain amino acid biosynthesis	Glutamate biosynthesis superpathway	separate	different process; names share words only
+Superpathway of serine and glycine biosynthesis	Serine biosynthesis	separate	general vs specific (part, variant or context)
+Superpathway of serine and glycine biosynthesis	Glycine biosynthesis	separate	general vs specific (part, variant or context)
+Superpathway of serine and glycine biosynthesis	Serine metabolism	separate	general vs specific (part, variant or context)
+Superpathway polyamine biosynthesis	Metabolism of polyamines	separate	different process; names share words only
+Superpathway polyamine biosynthesis	Interconversion of polyamines	separate	different process; names share words only
+Superpathway polyamine biosynthesis	Superpathway of serine and glycine biosynthesis	separate	different process; names share words only
+TCA cycle detailed	Maturation of TCA enzymes and regulation of TCA cycle	separate	different process; names share words only
+TCA cycle detailed	Citric acid cycle (TCA cycle)	merge	same cycle
+Threonine and methionine biosynthesis	Methionine degradation	separate	different process; names share words only
+Threonine and methionine biosynthesis	Threonine catabolism	separate	different process; names share words only
+Threonine and methionine biosynthesis	Methionine salvage pathway	separate	different process; names share words only
+Threonine biosynthesis	Threonine catabolism	separate	different process; names share words only
+Threonine biosynthesis	Threonine and methionine biosynthesis	separate	general vs specific (part, variant or context)
+Toll-like receptor signaling pathway	Toll Like Receptor 5 (TLR5) Cascade	separate	general vs specific (part, variant or context)
+Translation factors	Eukaryotic Translation Initiation	separate	different process; names share words only
+Translation factors	SUMOylation of transcription factors	separate	different process; names share words only
+Trehalose anabolism	Trehalose degradation low osmolarity	separate	different process; names share words only
+Triglyceride biosynthesis	Triglyceride metabolism	separate	general vs specific (part, variant or context)
+Triglyceride biosynthesis	Triglyceride catabolism	separate	different process; names share words only
+Tryptophan biosynthesis	Tryptophan degradation	separate	different process; names share words only
+Tryptophan biosynthesis	Tryptophan catabolism	separate	different process; names share words only
+Tryptophan biosynthesis	Phenylalanine, tyrosine and tryptophan biosynthesis	separate	general vs specific (part, variant or context)
+Tryptophan degradation	Tryptophan catabolism	merge	degradation = catabolism
+Tryptophan degradation via kynurenine	Tryptophan metabolism	separate	general vs specific (part, variant or context)
+Tryptophan degradation via kynurenine	Tryptophan biosynthesis	separate	different process; names share words only
+Tryptophan degradation via kynurenine	Tryptophan catabolism	merge	same process (kynurenine route)
+Tryptophan metabolism	Tryptophan biosynthesis	separate	general vs specific (part, variant or context)
+Tryptophan metabolism	Tryptophan degradation	separate	general vs specific (part, variant or context)
+Tyrosine biosynthesis	Phenylalanine and tyrosine metabolism	separate	different process; names share words only
+Tyrosine metabolism	Tyrosine biosynthesis	separate	general vs specific (part, variant or context)
+Tyrosine metabolism	Phenylalanine, tyrosine and tryptophan biosynthesis	separate	general vs specific (part, variant or context)
+UDP glucose conversion	Glucose metabolism	separate	general vs specific (part, variant or context)
+UDP glucose conversion	Glucose 1 phosphate metabolism	separate	different process; names share words only
+UDP N acetylgalactosamine biosynthesis	Synthesis of UDP-N-acetyl-glucosamine	separate	different process; names share words only
+UDP N acetylgalactosamine biosynthesis	N-Glycan biosynthesis	separate	different process; names share words only
+Valine, leucine and isoleucine biosynthesis	Valine biosynthesis	separate	general vs specific (part, variant or context)
+Valine, leucine and isoleucine biosynthesis	Isoleucine biosynthesis	separate	general vs specific (part, variant or context)
+Valine, leucine and isoleucine biosynthesis	Leucine biosynthesis	separate	general vs specific (part, variant or context)
+Valine, leucine and isoleucine degradation	Isoleucine degradation	separate	general vs specific (part, variant or context)
+Valine, leucine and isoleucine degradation	Leucine degradation	separate	general vs specific (part, variant or context)
+Valine, leucine and isoleucine degradation	Valine biosynthesis	separate	different process; names share words only
+ABC transporters	Zinc transporters	separate	different process; names share words only
+ACE inhibitor pathway	Transcriptional activation of cell cycle inhibitor p21	separate	different process; names share words only
+Adipogenesis genes	Epigenetic regulation of adipogenesis genes by MLL3 and MLL4 complexes	separate	general vs specific (part, variant or context)
+Adipogenesis genes	MLL4 and MLL3 complexes regulate expression of PPARG target genes in adipogenesis and hepatic steatosis	separate	general vs specific (part, variant or context)
+Alpha 6 beta 4 integrin signaling pathway	Integrin signaling	separate	general vs specific (part, variant or context)
+Alpha 6 beta 4 integrin signaling pathway	IL 4 signaling pathway	separate	different process; names share words only
+Alpha 6 beta 4 integrin signaling pathway	Interleukin-6 signaling	separate	different process; names share words only
+Amino acid conjugation of benzoic acid	D-Amino acid metabolism	separate	different process; names share words only
+Aminoacyl-tRNA biosynthesis	tRNA Aminoacylation	merge	same process
+AMPK signaling pathway	AMPK-induced ERAD and lysosome mediated degradation of PD-L1(CD274)	separate	general vs specific (part, variant or context)
+Androgen receptor signaling pathway	Androgen biosynthesis	separate	different process; names share words only
+Androgen receptor signaling pathway	Activated PKN1 stimulates transcription of AR (androgen receptor) regulated genes KLK2 and KLK3	separate	general vs specific (part, variant or context)
+Antifolate resistance	Endocrine resistance	separate	different process; names share words only
+Antigen processing and presentation	Antigen processing: Ubiquitination & Proteasome degradation	separate	different process; names share words only
+Apoptosis	Intrinsic Pathway for Apoptosis	separate	general vs specific (part, variant or context)
+Apoptosis modulation by HSP70	Regulation of Apoptosis	separate	different process; names share words only
+Autoimmune thyroid disease	Regulation of thyroid hormone activity	separate	different process; names share words only
+Autophagy - animal	Selective autophagy	separate	different process; names share words only
+Autophagy - other	Selective autophagy	separate	different process; names share words only
+Basal transcription factors	Nuclear Events (kinase and transcription factor activation)	separate	different process; names share words only
+Basal transcription factors	Anchoring of the basal body to the plasma membrane	separate	different process; names share words only
+Base excision repair	Base-Excision Repair, AP Site Formation	separate	general vs specific (part, variant or context)
+Bile secretion	Synthesis of bile acids and bile salts via 27-hydroxycholesterol	separate	different process; names share words only
+Biosynthesis of amino acids	Metabolism of amino acids and derivatives	separate	different process; names share words only
+BMP signaling pathway in eyelid development	Signaling by BMP	separate	general vs specific (part, variant or context)
+Breast cancer	Pathways in cancer	separate	different process; names share words only
+Breast cancer	Lipids measured in liver metastasis from breast cancer	separate	general vs specific (part, variant or context)
+Calcium regulation in cardiac cells	Cardiac muscle contraction	separate	different process; names share words only
+Carbon metabolism	One carbon metabolism and related pathways	separate	general vs specific (part, variant or context)
+Carbon metabolism	Glutathione and one carbon metabolism	separate	general vs specific (part, variant or context)
+Cell adhesion molecule (CAM) interaction	Regulation of Homotypic Cell-Cell Adhesion	separate	different process; names share words only
+Cellular senescence	Oxidative Stress Induced Senescence	separate	different process; names share words only
+Cellular senescence	Cellular response to hypoxia	separate	different process; names share words only
+Central carbon metabolism in cancer	Pathways in cancer	separate	different process; names share words only
+Central carbon metabolism in cancer	One carbon metabolism and related pathways	separate	different process; names share words only
+Cholesterol metabolism	Metabolism	separate	different process; names share words only
+Citrate cycle (TCA cycle)	Cell cycle	separate	different process; names share words only
+Complement activation classical pathway	Classical antibody-mediated complement activation	merge	same classical complement pathway
+Complement activation classical pathway	Complement cascade	separate	different process; names share words only
+Complement activation classical pathway	Lectin pathway of complement activation	separate	different process; names share words only
+Complement activation classical pathway	Alternative complement activation	separate	different process; names share words only
+Complement and coagulation cascades	Coagulation pathway	separate	general vs specific (part, variant or context)
+Cytokine-cytokine receptor interaction	IL-6-type cytokine receptor ligand interactions	separate	different process; names share words only
+Cytokines and inflammatory response	Cytokine Signaling in Immune system	separate	different process; names share words only
+Cytosolic DNA-sensing pathway	Cytosolic sensors of pathogen-associated DNA	merge	same process
+Delta Notch signaling pathway	Signaling by NOTCH	merge	same Notch signaling
+Delta Notch signaling pathway	RUNX3 regulates NOTCH signaling	separate	different process; names share words only
+Drug metabolism - cytochrome P450	Eicosanoid metabolism via cytochrome P450 monooxygenases	separate	different process; names share words only
+Drug metabolism - other enzymes	Drug metabolism - cytochrome P450	separate	different process; names share words only
+Dysregulated miRNA targeting in insulin PI3K AKT signaling	PI3K-Akt signaling pathway	separate	general vs specific (part, variant or context)
+Dysregulated miRNA targeting in insulin PI3K AKT signaling	PI3K/AKT activation	separate	different process; names share words only
+Dysregulated miRNA targeting in insulin PI3K AKT signaling	Negative regulation of the PI3K/AKT network	separate	different process; names share words only
+Dysregulated miRNA targeting in insulin PI3K AKT signaling	MET activates PI3K/AKT signaling	separate	different process; names share words only
+EGFR tyrosine kinase inhibitor resistance	Signaling by EGFR	separate	general vs specific (part, variant or context)
+EGFR tyrosine kinase inhibitor resistance	Tyrosine metabolism	separate	general vs specific (part, variant or context)
+Eicosanoid lipid synthesis map	Eicosanoids	separate	different process; names share words only
+Eicosanoid lipid synthesis map	Metabolism of lipids	separate	different process; names share words only
+Eicosanoid lipid synthesis map	MAP kinase activation	separate	different process; names share words only
+Eicosanoid metabolism via cytochrome P450 monooxygenases	Eicosanoids	separate	different process; names share words only
+Eicosanoid metabolism via lipoxygenases LOX	Eicosanoids	separate	different process; names share words only
+Eicosanoid metabolism via lipoxygenases LOX	Eicosanoid synthesis	separate	different process; names share words only
+Electron transport chain	Respiratory electron transport	merge	same process
+Electron transport chain	Electron transport from NADPH to Ferredoxin	separate	different process; names share words only
+Electron transport chain	Aerobic respiration and respiratory electron transport	separate	different process; names share words only
+Elongation of very long chain fatty acids	Beta-oxidation of very long chain fatty acids	separate	different process; names share words only
+Elongation of very long chain fatty acids	Synthesis of very long-chain fatty acyl-CoAs	separate	different process; names share words only
+Elongation of very long chain fatty acids	Fatty acid elongation	separate	different process; names share words only
+Elongation of very long chain fatty acids	Mitochondrial long chain fatty acid beta oxidation	separate	different process; names share words only
+Epstein-Barr virus infection	Human immunodeficiency virus 1 infection	separate	different process; names share words only
+ESC pluripotency pathways	Wnt signaling pathway and pluripotency	separate	different process; names share words only
+Estrogen metabolism	Estrogen biosynthesis	separate	general vs specific (part, variant or context)
+Estrogen metabolism	Estrogen-dependent gene expression	separate	general vs specific (part, variant or context)
+Estrogen signaling	Estrogen-dependent gene expression	separate	general vs specific (part, variant or context)
+Estrogen signaling pathway	Estrogen-dependent gene expression	separate	general vs specific (part, variant or context)
+Ethanol metabolism resulting in production of ROS by CYP2E1	Ethanol oxidation	separate	different process; names share words only
+Ethanol metabolism resulting in production of ROS by CYP2E1	ROS and RNS production in phagocytes	separate	different process; names share words only
+Ether lipid metabolism	Peroxisomal lipid metabolism	separate	different process; names share words only
+Eukaryotic transcription initiation	Eukaryotic Translation Termination	separate	different process; names share words only
+Fatty acid beta oxidation	Fatty acid oxidation	merge	same process
+Fatty acid beta oxidation streamlined	Fatty acid beta oxidation	merge	same process
+Fatty acid beta oxidation streamlined	Fatty acid oxidation	separate	general vs specific (part, variant or context)
+Fatty acid beta oxidation streamlined	Mitochondrial Fatty Acid Beta-Oxidation	separate	different process; names share words only
+Fatty acid beta oxidation streamlined	mitochondrial fatty acid beta-oxidation of unsaturated fatty acids	separate	different process; names share words only
+Fatty acid oxidation	Fatty acids	separate	different process; names share words only
+Fibrin complement receptor 3 signaling pathway	Fibrin formation	separate	different process; names share words only
+Fibrin complement receptor 3 signaling pathway	Complement cascade	separate	different process; names share words only
+Fibrin complement receptor 3 signaling pathway	Regulation of Complement cascade	separate	different process; names share words only
+Focal adhesion	Focal adhesion PI3K Akt mTOR signaling pathway	separate	general vs specific (part, variant or context)
+Focal adhesion	Integrin mediated cell adhesion	separate	different process; names share words only
+Focal adhesion PI3K Akt mTOR signaling pathway	PI3K-Akt signaling pathway	separate	general vs specific (part, variant or context)
+Focal adhesion PI3K Akt mTOR signaling pathway	PI3K/AKT activation	separate	different process; names share words only
+Folate biosynthesis	One carbon pool by folate	separate	different process; names share words only
+Folate transport and metabolism	One carbon pool by folate	separate	different process; names share words only
+FoxO signaling pathway	Regulation of FOXO transcriptional activity by acetylation	separate	general vs specific (part, variant or context)
+Fructose and mannose metabolism	Synthesis of GDP-mannose	separate	different process; names share words only
+G protein signaling pathways	G-protein mediated events	separate	different process; names share words only
+G protein signaling pathways	G-protein activation	separate	different process; names share words only
+G protein signaling pathways	G-protein beta:gamma signalling	separate	different process; names share words only
+G protein signaling pathways	G alpha (s) signalling events	separate	different process; names share words only
+G1 to S cell cycle control	TP53 Regulates Transcription of Genes Involved in G1 Cell Cycle Arrest	separate	different process; names share words only
+Gastric acid secretion	Insulin secretion	separate	different process; names share words only
+Gastric cancer	Pathways in cancer	separate	different process; names share words only
+Globo series sphingolipid metabolism	Sphingolipid metabolism	separate	general vs specific (part, variant or context)
+Globo series sphingolipid metabolism	Sphingolipid signaling pathway	separate	general vs specific (part, variant or context)
+Glutathione metabolism	Glutathione and one carbon metabolism	separate	general vs specific (part, variant or context)
+Glycerolipid metabolism	Metabolism	separate	different process; names share words only
+Glycerophospholipid metabolism	Metabolism	separate	different process; names share words only
+Glycine, serine and threonine metabolism	Glycine degradation	separate	different process; names share words only
+Glycine, serine and threonine metabolism	Glyoxylate metabolism and glycine degradation	separate	different process; names share words only
+Glycogen metabolism	Glycogen synthesis	separate	general vs specific (part, variant or context)
+Glycogen metabolism	Glycogen breakdown (glycogenolysis)	separate	general vs specific (part, variant or context)
+Glycogen metabolism	Metabolism	separate	different process; names share words only
+Glycosaminoglycan degradation	Glycosaminoglycan biosynthesis - keratan sulfate	separate	different process; names share words only
+Glycosaminoglycan degradation	Glycosaminoglycan-protein linkage region biosynthesis	separate	different process; names share words only
+Glycosaminoglycan degradation	Glycosaminoglycan biosynthesis - heparan sulfate / heparin	separate	different process; names share words only
+Glycosphingolipid biosynthesis - ganglio series	Glycosphingolipid metabolism	separate	general vs specific (part, variant or context)
+Glycosphingolipid biosynthesis - globo and isoglobo series	Globo series sphingolipid metabolism	separate	different process; names share words only
+Glycosphingolipid biosynthesis - lacto and neolacto series	Glycosphingolipid metabolism	separate	general vs specific (part, variant or context)
+GnRH secretion	Regulation of insulin secretion	separate	different process; names share words only
+GPCRs non odorant	Signaling by GPCR	separate	different process; names share words only
+GPCRs non odorant	Nucleotide GPCRs	separate	different process; names share words only
+GPCRs non odorant	GPCR downstream signalling	separate	different process; names share words only
+GPCRs odorant	Signaling by GPCR	separate	different process; names share words only
+GPCRs odorant	Nucleotide GPCRs	separate	different process; names share words only
+GPCRs odorant	GPCR downstream signalling	separate	different process; names share words only
+GPCRs orphan	Signaling by GPCR	separate	different process; names share words only
+GPCRs orphan	Nucleotide GPCRs	separate	different process; names share words only
+GPCRs orphan	GPCR downstream signalling	separate	different process; names share words only
+GPCRs orphan	GPCRs other	separate	different process; names share words only
+GPCRs peptide	Signaling by GPCR	separate	different process; names share words only
+GPCRs peptide	Nucleotide GPCRs	separate	different process; names share words only
+GPCRs peptide	Peptide hormone metabolism	separate	different process; names share words only
+GPCRs peptide	Peptide hormone biosynthesis	separate	different process; names share words only
+GPCRs small ligand	GPCR ligand binding	separate	different process; names share words only
+GPCRs small ligand	Signaling by GPCR	separate	different process; names share words only
+GPCRs small ligand	Nucleotide GPCRs	separate	different process; names share words only
+GPCRs small ligand	Transport of small molecules	separate	different process; names share words only
+Heart development	Regulation of beta-cell development	separate	different process; names share words only
+Heme biosynthesis	Scavenging of heme from plasma	separate	different process; names share words only
+Hepatitis B	B cell receptor signaling pathway	separate	different process; names share words only
+Hepatocyte growth factor receptor signaling	Signaling by Type 1 Insulin-like Growth Factor 1 Receptor (IGF1R)	separate	different process; names share words only
+Herpes simplex virus 1 infection	Human T-cell leukemia virus 1 infection	separate	different process; names share words only
+Histone modifications	Post-translational protein modification	separate	different process; names share words only
+Histone modifications	Transport to the Golgi and subsequent modification	separate	different process; names share words only
+Histone modifications	tRNA modification in the nucleus and cytosol	separate	different process; names share words only
+Homologous recombination	HDR through Homologous Recombination (HRR) or Single Strand Annealing (SSA)	separate	general vs specific (part, variant or context)
+Homologous recombination	Meiotic recombination	separate	different process; names share words only
+Hormone signaling	Peptide hormone biosynthesis	separate	general vs specific (part, variant or context)
+Hypertrophy model	The fatty acid cycling model	separate	different process; names share words only
+Hypoxia dependent differentiation of myoblasts	Cellular response to hypoxia	separate	different process; names share words only
+Hypoxia dependent proliferation of myoblasts	Hypoxia dependent differentiation of myoblasts	separate	different process; names share words only
+Hypoxia dependent proliferation of myoblasts	Regulation of MITF-M-dependent genes involved in cell cycle and proliferation	separate	different process; names share words only
+Hypoxia dependent self renewal of myoblasts	Hypoxia dependent differentiation of myoblasts	separate	different process; names share words only
+Hypoxia dependent self renewal of myoblasts	Hypoxia dependent proliferation of myoblasts	separate	different process; names share words only
+IL 1 signaling pathway	IL 2 signaling pathway	separate	different process; names share words only
+IL 3 signaling pathway	IL 2 signaling pathway	separate	different process; names share words only
+IL 4 signaling pathway	IL 1 signaling pathway	separate	different process; names share words only
+IL 4 signaling pathway	IL 3 signaling pathway	separate	different process; names share words only
+IL 4 signaling pathway	IL 9 signaling pathway	separate	different process; names share words only
+IL 5 signaling pathway	IL 1 signaling pathway	separate	different process; names share words only
+IL 5 signaling pathway	IL 2 signaling pathway	separate	different process; names share words only
+IL 5 signaling pathway	IL 3 signaling pathway	separate	different process; names share words only
+IL 6 signaling pathway	IL-6-type cytokine receptor ligand interactions	separate	general vs specific (part, variant or context)
+IL 6 signaling pathway	Interleukin-6 signaling	merge	IL = interleukin
+IL 6 signaling pathway	IL 1 signaling pathway	separate	different process; names share words only
+IL 7 signaling pathway	Interleukin-7 signaling	merge	IL = interleukin
+IL 7 signaling pathway	IL 2 signaling pathway	separate	different process; names share words only
+IL 7 signaling pathway	IL 3 signaling pathway	separate	different process; names share words only
+IL 9 signaling pathway	Interleukin-9 signaling	merge	IL = interleukin
+IL 9 signaling pathway	IL 1 signaling pathway	separate	different process; names share words only
+IL 9 signaling pathway	IL 2 signaling pathway	separate	different process; names share words only
+IL 9 signaling pathway	IL 3 signaling pathway	separate	different process; names share words only
+IL-17 signaling pathway	IL 1 signaling pathway	separate	different process; names share words only
+IL-17 signaling pathway	IL 2 signaling pathway	separate	different process; names share words only
+IL-17 signaling pathway	IL 3 signaling pathway	separate	different process; names share words only
+Inflammatory bowel disease	Cytokines and inflammatory response	separate	different process; names share words only
+Inflammatory mediator regulation of TRP channels	Inflammatory response pathway	separate	different process; names share words only
+Integrated stress response (ISR) signaling pathway	Cellular response to mitochondrial stress	separate	different process; names share words only
+Intestinal immune network for IgA production	Intestinal absorption	separate	different process; names share words only
+Iron homeostasis	Iron uptake and transport	separate	different process; names share words only
+Iron homeostasis	Platelet homeostasis	separate	different process; names share words only
+Iron homeostasis	Platelet calcium homeostasis	separate	different process; names share words only
+Kit receptor signaling pathway	Regulation of KIT signaling	separate	different process; names share words only
+Kit receptor signaling pathway	Signaling by SCF-KIT	merge	same receptor signaling
+Leptin insulin signaling overlap	Signaling by Insulin receptor	separate	different process; names share words only
+Linoleic acid metabolism	alpha-linolenic (omega3) and linoleic (omega6) acid metabolism	separate	general vs specific (part, variant or context)
+Linoleic acid metabolism	Fatty acid metabolism	separate	different process; names share words only
+Lipid and atherosclerosis	Peroxisomal lipid metabolism	separate	different process; names share words only
+Lipoic acid metabolism	Fatty acid metabolism	separate	different process; names share words only
+Lysosome biogenesis	Complex I biogenesis	separate	different process; names share words only
+Lysosome biogenesis	Transcriptional activation of mitochondrial biogenesis	separate	different process; names share words only
+Mapk cascade	Negative regulation of MAPK pathway	separate	different process; names share words only
+MAPK signaling pathway	MAPK family signaling cascades	merge	same signaling
+Mechanisms associated with pluripotency	Wnt signaling pathway and pluripotency	separate	different process; names share words only
+Mechanisms associated with pluripotency	ESC pluripotency pathways	merge	same process
+Mecp2 and associated Rett syndrome	Regulation of MECP2 expression and activity	separate	different process; names share words only
+Metabolic pathways	FOXO-mediated transcription of oxidative stress, metabolic and neuronal genes	separate	different process; names share words only
+Metabolism of xenobiotics by cytochrome P450	Eicosanoid metabolism via cytochrome P450 monooxygenases	separate	different process; names share words only
+Methylation	SUMOylation of DNA methylation proteins	separate	general vs specific (part, variant or context)
+Methylation	Regulation of TP53 Activity through Methylation	separate	general vs specific (part, variant or context)
+Microglia pathogen phagocytosis pathway	Role of phospholipids in phagocytosis	separate	different process; names share words only
+MicroRNAs in cancer	Thyroid cancer	separate	different process; names share words only
+MicroRNAs in cardiomyocyte hypertrophy	Hypertrophy model	separate	different process; names share words only
+MicroRNAs in cardiomyocyte hypertrophy	MicroRNA (miRNA) biogenesis	separate	different process; names share words only
+miR 222 in exercise induced cardiac growth	miR 1 in cardiac development	separate	different process; names share words only
+Mismatch repair	Protein repair	separate	different process; names share words only
+Mismatch repair	DNA Repair	separate	different process; names share words only
+Mitochondrial gene expression	Estrogen-dependent gene expression	separate	different process; names share words only
+Monoamine GPCRs	GPCRs other	separate	different process; names share words only
+mRNA processing	Insulin processing	separate	different process; names share words only
+mTOR signaling pathway	Focal adhesion PI3K Akt mTOR signaling pathway	separate	general vs specific (part, variant or context)
+N-Glycan biosynthesis	Synthesis of substrates in N-glycan biosythesis	separate	different process; names share words only
+Neuroactive ligand-receptor interaction	IL-6-type cytokine receptor ligand interactions	separate	different process; names share words only
+NOD-like receptor signaling pathway	Toll-like Receptor Cascades	separate	different process; names share words only
+Non-small cell lung cancer	Pathways in cancer	separate	different process; names share words only
+Nuclear Receptors	Nuclear signaling by ERBB4	separate	different process; names share words only
+Nuclear receptors in lipid metabolism and toxicity	Nuclear Receptor transcription pathway	separate	different process; names share words only
+Nucleotide GPCRs	Nucleotide biosynthesis	separate	different process; names share words only
+Nucleotide metabolism	Nucleotide catabolism	separate	general vs specific (part, variant or context)
+Olfactory transduction	Downstream signal transduction	separate	different process; names share words only
+Omega 3 omega 6 fatty acid synthesis	Fatty acids	separate	different process; names share words only
+Omega 9 fatty acid synthesis	Fatty acids	separate	different process; names share words only
+Omega 9 fatty acid synthesis	Fatty acid metabolism	separate	general vs specific (part, variant or context)
+One carbon metabolism and related pathways	Glutathione and one carbon metabolism	separate	different process; names share words only
+One carbon pool by folate	One carbon metabolism and related pathways	separate	different process; names share words only
+One carbon pool by folate	Glutathione and one carbon metabolism	separate	different process; names share words only
+Oxidation by cytochrome P450	Eicosanoid metabolism via cytochrome P450 monooxygenases	separate	different process; names share words only
+Oxidative damage response	SUMOylation of DNA damage response and repair proteins	separate	different process; names share words only
+Oxidative phosphorylation	Oxidative stress and redox pathway	separate	different process; names share words only
+Oxidative stress and redox pathway	Oxidative Stress Induced Senescence	separate	different process; names share words only
+Oxidative stress response	Oxidative stress and redox pathway	merge	same stress response
+p38 Mapk signaling pathway	activated TAK1 mediates p38 MAPK activation	separate	general vs specific (part, variant or context)
+p38 Mapk signaling pathway	Mapk cascade	separate	different process; names share words only
+p53 signaling	Stabilization of p53	separate	general vs specific (part, variant or context)
+p53 signaling	p53-Dependent G1 DNA Damage Response	separate	general vs specific (part, variant or context)
+p53 signaling	Transcriptional activation of p53 responsive genes	separate	general vs specific (part, variant or context)
+p53 signaling pathway	p53 signaling	merge	same signaling
+p53 signaling pathway	p53-Dependent G1 DNA Damage Response	separate	general vs specific (part, variant or context)
+Pancreatic secretion	Regulation of insulin secretion	separate	different process; names share words only
+PD-L1 expression and PD-1 checkpoint pathway in cancer	Regulation of PD-L1(CD274) Post-translational modification	separate	different process; names share words only
+Pentose phosphate pathway	Inositol phosphate metabolism	separate	different process; names share words only
+Phagocytosis	Fcgamma receptor (FCGR) dependent phagocytosis	separate	general vs specific (part, variant or context)
+Phenylalanine metabolism	Metabolism	separate	different process; names share words only
+Phospholipase D signaling pathway	D-Amino acid metabolism	separate	different process; names share words only
+Phospholipase D signaling pathway	Phospholipase C-mediated cascade; FGFR3	separate	different process; names share words only
+PI3K-Akt signaling pathway	MET activates PI3K/AKT signaling	separate	general vs specific (part, variant or context)
+PI3K-Akt signaling pathway	CD28 dependent PI3K/Akt signaling	separate	general vs specific (part, variant or context)
+Platinum drug resistance	Insulin resistance	separate	different process; names share words only
+Platinum drug resistance	Drug ADME	separate	different process; names share words only
+Platinum drug resistance	Endocrine resistance	separate	different process; names share words only
+Porphyrin metabolism	Metabolism	separate	different process; names share words only
+Progesterone-mediated oocyte maturation	Centrosome maturation	separate	different process; names share words only
+Progesterone-mediated oocyte maturation	Immunoglobulin maturation	separate	different process; names share words only
+Proteasome	Antigen processing: Ubiquitination & Proteasome degradation	separate	general vs specific (part, variant or context)
+Protein processing in endoplasmic reticulum	Transport of gamma-carboxylated protein precursors from the endoplasmic reticulum to the Golgi apparatus	separate	different process; names share words only
+Ptf1a related regulatory pathway	Signal regulatory protein family interactions	separate	different process; names share words only
+Purine metabolism	Cleavage of the damaged purine	separate	general vs specific (part, variant or context)
+Pyrimidine metabolism	Pyrimidine salvage	separate	general vs specific (part, variant or context)
+Pyrimidine metabolism	Cleavage of the damaged pyrimidine	separate	general vs specific (part, variant or context)
+Pyruvate metabolism	Metabolism	separate	different process; names share words only
+Ras signaling pathway	Activation of RAS in B cells	separate	general vs specific (part, variant or context)
+Ras signaling pathway	MET activates RAS signaling	separate	general vs specific (part, variant or context)
+Regulation of cardiac hypertrophy by miR 208	miR 1 in cardiac development	separate	different process; names share words only
+Renin secretion	Bile secretion	separate	different process; names share words only
+Renin-angiotensin system	Deregulation of renin angiotensin system by SARS CoV infection	separate	general vs specific (part, variant or context)
+Retinol metabolism	Metabolism	separate	different process; names share words only
+Ribosome biogenesis in eukaryotes	Mitochondrial biogenesis	separate	different process; names share words only
+RNA degradation	Nuclear RNA decay	separate	different process; names share words only
+RNA degradation	RNA Polymerase I Transcription	separate	different process; names share words only
+Robo4 and VEGF signaling pathways crosstalk	Signaling by VEGF	separate	general vs specific (part, variant or context)
+Selenium metabolism selenoproteins	Selenium micronutrient network	separate	different process; names share words only
+Serotonin and anxiety	Serotonin receptor 2 and STAT3 signaling	separate	different process; names share words only
+Serotonin and anxiety related events	Serotonin receptor 2 and STAT3 signaling	separate	different process; names share words only
+Serotonin receptor 2 and STAT3 signaling	Serotonin receptors	separate	different process; names share words only
+Serotonin receptor 2 and STAT3 signaling	Metabolism of serotonin	separate	general vs specific (part, variant or context)
+Serotonin receptor 2 and STAT3 signaling	MET activates STAT3	separate	different process; names share words only
+Serotonin receptor 2 and STAT3 signaling	PTK6 Activates STAT3	separate	different process; names share words only
+Signal transduction of S1P receptor	Downstream signal transduction	separate	different process; names share words only
+Signal transduction of S1P receptor	Signal transduction by L1	separate	different process; names share words only
+Signal transduction of S1P receptor	Taste transduction	separate	different process; names share words only
+Signaling pathways regulating pluripotency of stem cells	Wnt signaling pathway and pluripotency	separate	different process; names share words only
+Signaling pathways regulating pluripotency of stem cells	Longevity regulating pathway	separate	different process; names share words only
+Small cell lung cancer	Pathways in cancer	separate	different process; names share words only
+Small cell lung cancer	GPCRs small ligand	separate	different process; names share words only
+Sphingolipid metabolism integrated pathway	Sphingolipid catabolism	separate	different process; names share words only
+Sphingolipid metabolism overview	Sphingolipid catabolism	separate	different process; names share words only
+SREBF and miR33 in cholesterol and lipid homeostasis	Cholesterol metabolism	separate	general vs specific (part, variant or context)
+Steroid biosynthesis	Metabolism of steroid hormones	separate	different process; names share words only
+Steroid hormone biosynthesis	Metabolism of steroids	separate	different process; names share words only
+Striated muscle contraction	Smooth Muscle Contraction	separate	different process; names share words only
+Sulfur cycle	Mitochondrial iron-sulfur cluster biogenesis	separate	different process; names share words only
+Sulfur metabolism	Mitochondrial iron-sulfur cluster biogenesis	separate	general vs specific (part, variant or context)
+Synaptic vesicle cycle	COPII-mediated vesicle transport	separate	different process; names share words only
+Synthesis and degradation of ketone bodies	Utilization of Ketone Bodies	separate	different process; names share words only
+Synthesis and degradation of ketone bodies	Ketone body metabolism	merge	same process
+T cell receptor signaling pathway	Regulation of T cell activation by CD28 family	separate	different process; names share words only
+T cell receptor signaling pathway	B cell receptor signaling pathway	separate	different process; names share words only
+Taste transduction	Signal transduction by L1	separate	different process; names share words only
+TCA cycle	Maturation of TCA enzymes and regulation of TCA cycle	separate	general vs specific (part, variant or context)
+TCA cycle	Citric acid cycle (TCA cycle)	merge	synonyms (TCA cycle)
+TCA cycle	Cell cycle	separate	different process; names share words only
+TGF beta receptor signaling pathway	Signaling by TGF-beta Receptor Complex	merge	same receptor signaling
+TGF beta receptor signaling pathway	Downregulation of TGF-beta receptor signaling	separate	general vs specific (part, variant or context)
+TGF beta signaling pathway	Signaling by TGF-beta Receptor Complex	merge	same signaling
+TGF beta signaling pathway	Downregulation of TGF-beta receptor signaling	separate	general vs specific (part, variant or context)
+TGF-beta signaling pathway	TGF beta receptor signaling pathway	merge	same signaling
+Thyroid cancer	Regulation of thyroid hormone activity	separate	different process; names share words only
+TNF alpha NF kB signaling pathway	TNF signaling	merge	same TNF signaling
+TNF alpha NF kB signaling pathway	TRAF6 mediated NF-kB activation	separate	different process; names share words only
+TNF alpha NF kB signaling pathway	FCERI mediated NF-kB activation	separate	different process; names share words only
+TNF signaling pathway	TNF alpha NF kB signaling pathway	merge	same TNF signaling
+Toll like receptor signaling	Toll Like Receptor 2 (TLR2) Cascade	separate	general vs specific (part, variant or context)
+Toll like receptor signaling	Toll Like Receptor 4 (TLR4) Cascade	separate	general vs specific (part, variant or context)
+Toll-like receptor signaling pathway	Toll Like Receptor 2 (TLR2) Cascade	separate	general vs specific (part, variant or context)
+Toll-like receptor signaling pathway	Toll Like Receptor 4 (TLR4) Cascade	separate	general vs specific (part, variant or context)
+Transcriptional activation by Nfe2l2 in response to phytochemicals	Nuclear events mediated by NFE2L2	separate	different process; names share words only
+Translation factors	Translation initiation complex formation	separate	different process; names share words only
+Tryptophan metabolism	Metabolism	separate	different process; names share words only
+Type II interferon signaling IFNG	Regulation of IFNG signaling	separate	different process; names share words only
+Type II interferon signaling IFNG	IFNG signaling activates MAPKs	separate	different process; names share words only
+Type II interferon signaling IFNG	Interferon gamma signaling	merge	type II interferon = IFN-gamma
+Tyrosine metabolism	Signaling by Non-Receptor Tyrosine Kinases	separate	general vs specific (part, variant or context)
+Various types of N-glycan biosynthesis	Mannose type O-glycan biosynthesis	separate	different process; names share words only
+Vascular smooth muscle contraction	Striated Muscle Contraction	separate	different process; names share words only
+Vasopressin-regulated water reabsorption	Vasopressin-like receptors	separate	different process; names share words only
+VEGF signaling pathway	Robo4 and VEGF signaling pathways crosstalk	separate	general vs specific (part, variant or context)
+Viral protein interaction with cytokine and cytokine receptor	IL-6-type cytokine receptor ligand interactions	separate	different process; names share words only
+Virion - Herpesvirus	Virion - Adenovirus	separate	different process; names share words only
+Virion - Human immunodeficiency virus	Human T-cell leukemia virus 1 infection	separate	different process; names share words only
+Virion - Rotavirus	Virion - Herpesvirus	separate	different process; names share words only
+Vitamin B6 metabolism	Metabolism of vitamin K	separate	different process; names share words only
+Vitamin B6 metabolism	Metabolism of vitamins and cofactors	separate	different process; names share words only
+Wnt signaling	Wnt signaling pathway and pluripotency	separate	general vs specific (part, variant or context)
+Wnt signaling pathway	Wnt signaling pathway and pluripotency	separate	general vs specific (part, variant or context)
+Wnt signaling pathway and pluripotency	Signaling by WNT	separate	general vs specific (part, variant or context)
+beta-Alanine metabolism	beta-Lactam resistance	separate	different process; names share words only
+Biosynthesis of amino acids	Amino sugar and nucleotide sugar metabolism	separate	different process; names share words only
+Biosynthesis of nucleotide sugars	Polyketide sugar unit biosynthesis	separate	different process; names share words only
+Biosynthesis of secondary metabolites	Secondary bile acid biosynthesis	separate	different process; names share words only
+Carbon fixation by Calvin cycle	Other carbon fixation pathways	separate	different process; names share words only
+Carbon metabolism	Other carbon fixation pathways	separate	general vs specific (part, variant or context)
+Fatty acid degradation	Biosynthesis of unsaturated fatty acids	separate	different process; names share words only
+Folate transport and metabolism	Cobalamin transport and metabolism	separate	different process; names share words only
+Nitrogen cycle	Nitrogen metabolism	separate	general vs specific (part, variant or context)
+Nitrogen cycle	Sulfur cycle	separate	different process; names share words only
+Nitrogen cycle	Citrate cycle (TCA cycle)	separate	different process; names share words only
+Nucleotide excision repair	Mismatch repair	separate	different process; names share words only
+Nucleotide metabolism	Biosynthesis of nucleotide sugars	separate	general vs specific (part, variant or context)
+Nucleotide metabolism	Biosynthesis of various nucleotide sugars	separate	general vs specific (part, variant or context)
+Nucleotide metabolism	Nucleotide excision repair	separate	general vs specific (part, variant or context)
+Polyketide sugar unit biosynthesis	Amino sugar and nucleotide sugar metabolism	separate	different process; names share words only
+Steroid biosynthesis	Steroid degradation	separate	different process; names share words only
+Sulfur cycle	Citrate cycle (TCA cycle)	separate	different process; names share words only
+MPS II - Hunter syndrome (CS/DS degradation)	MPS I - Hurler syndrome (CS/DS degradation)	separate	different disease (MPS II vs MPS I)
+MPS II - Hunter syndrome (HS-GAG degradation)	MPS I - Hurler syndrome (HS-GAG degradation)	separate	different disease (MPS II vs MPS I)

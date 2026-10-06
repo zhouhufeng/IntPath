@@ -101,3 +101,15 @@ def test_human_groups():
         names[code] = [p.name for p in read_legacy_source(n / folder / f"sapiens{folder}NormPthGEN", None, code)]
     groups = group_related(find_related_pairs(names))
     assert len(groups) == 57 and sum(len(g.members) for g in groups) == 136
+
+
+def test_clean_name_species_suffix():
+    from intpath.names import clean_name
+
+    assert clean_name("Apoptosis - Homo sapiens (human)") == "Apoptosis"
+    assert clean_name("Purine metabolism - Mycobacterium tuberculosis H37Rv") == "Purine metabolism"
+    # subtitles that are not species names are kept
+    assert clean_name("Autophagy - yeast") == "Autophagy - yeast"
+    assert clean_name("Longevity regulating pathway - multiple species") == "Longevity regulating pathway - multiple species"
+    assert clean_name("MPS IIIB - Sanfilippo syndrome B") == "MPS IIIB - Sanfilippo syndrome B"
+    assert clean_name("MPS I - Hurler syndrome (CS/DS degradation)") == "MPS I - Hurler syndrome (CS/DS degradation)"
