@@ -235,9 +235,9 @@ async function sidebar(side, setId, dg, vals, cy) {
   const yourMissing = missing.filter(([g]) => hl.has(g.toUpperCase())).length;
   const colour = g => { const v = val(g); if (v === undefined) return ""; const c = v > 0 ? "#d1495b" : "#3a6ea5"; return `style="border-left:3px solid ${c}"`; };
   side.innerHTML = `<div class="sidehead"><b>${onDiagram}</b> of ${all.length} genes of this integrated pathway are on this diagram.</div>
-    ${missing.length ? `<div class="sidehead"><b>${missing.length} more</b> come from the other merged sources${hl.size ? ` (${yourMissing} ${yourMissing === 1 ? "is a" : "are"} ${QUERY.values ? "leading-edge" : "your"} gene${yourMissing === 1 ? "" : "s"})` : ""}:</div>
-    <ul class="sidelist">${missing.map(([g, src]) => `<li ${colour(g)} class="${hl.has(g.toUpperCase()) ? "mine" : ""}"><a onclick="showGene('${esc(g)}')">${esc(g)}</a>
-      <span class="srcs">${src.map(x => esc(x)).join(", ")}</span>${val(g) !== undefined ? `<span class="srcs">score ${(+val(g)).toPrecision(3)}</span>` : ""}</li>`).join("")}</ul>`
+    ${missing.length ? `<div class="sidehead"><b>${missing.length} more</b> genes of this pathway are not drawn here${hl.size ? ` (${yourMissing} ${yourMissing === 1 ? "is a" : "are"} ${QUERY.values ? "leading-edge" : "your"} gene${yourMissing === 1 ? "" : "s"})` : ""}:</div>
+    <ul class="sidelist">${missing.map(([g]) => `<li ${colour(g)} class="${hl.has(g.toUpperCase()) ? "mine" : ""}"><a onclick="showGene('${esc(g)}')">${esc(g)}</a>
+      ${val(g) !== undefined ? `<span class="srcs">score ${(+val(g)).toPrecision(3)}</span>` : ""}</li>`).join("")}</ul>`
     : ""}`;
 }
 
@@ -521,6 +521,7 @@ async function showSet(id) {
     ${s.pairs.length ? `<p><b>${s.pairs.length} gene pairs</b></p>
     <div class="tablewrap"><table><tr><th>Gene A</th><th>Gene B</th><th>Relation</th></tr>${s.pairs.slice(0, 300).map(p => `<tr><td>${esc(p.a)}</td><td>${esc(p.b)}</td><td>${p.relations.join(", ")}</td></tr>`).join("")}</table></div>` : ""}`;
   mapPanel($("#setMap"), id, s.name, false);
+  $("#detail").scrollIntoView({behavior: "smooth", block: "start"});
 }
 
 async function showGene(sym) {
@@ -532,6 +533,7 @@ async function showGene(sym) {
     <div class="tablewrap"><table><tr><th>Partner</th><th>Publications</th><th>Confidence</th><th>Also a pathway gene pair</th></tr>${g.ppi_partners.map(p => `<tr><td><a onclick="showGene('${esc(p.gene)}')">${esc(p.gene)}</a></td><td class="num">${p.n_pmids}</td><td>${esc(p.tier)}</td><td>${p.pathway_supported ? "yes" : ""}</td></tr>`).join("")}</table></div>
     ${(g.string_partners || []).length ? `<p><b>${g.string_partners.length} STRING partners</b></p>
     <div class="tablewrap"><table><tr><th>Partner</th><th>STRING score</th></tr>${g.string_partners.map(p => `<tr><td><a onclick="showGene('${esc(p.gene)}')">${esc(p.gene)}</a></td><td class="num">${p.string_score}</td></tr>`).join("")}</table></div>` : ""}`;
+  $("#detail").scrollIntoView({behavior: "smooth", block: "start"});
 }
 
 const COLLECTION_LABELS = {"pathway": "IntPath pathways", "GO:BP": "GO biological process", "GO:MF": "GO molecular function", "GO:CC": "GO cellular component", "msigdb:H": "MSigDB Hallmarks"};
